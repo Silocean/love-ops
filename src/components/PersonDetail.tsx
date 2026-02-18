@@ -5,7 +5,7 @@ import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
 import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost } from '../utils-date'
-import { STAGE_LABELS, PAID_BY_LABELS } from '../constants'
+import { STAGE_LABELS, PAID_BY_LABELS, INITIATED_BY_LABELS } from '../constants'
 import ImpressionSection from './ImpressionSection'
 import MilestoneSection from './MilestoneSection'
 import QuestionsSection from './QuestionsSection'
@@ -13,7 +13,6 @@ import PlanSection from './PlanSection'
 import DecisionSection from './DecisionSection'
 import ReminderSection from './ReminderSection'
 import PhotoViewer from './PhotoViewer'
-import AnniversarySuggestions from './AnniversarySuggestions'
 import ConfirmModal from './ConfirmModal'
 
 interface Props {
@@ -219,6 +218,11 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
                     <div className="timeline-header-main">
                       <span className="timeline-date">{format(new Date(d.date), 'M月d日 yyyy', { locale: zhCN })}</span>
                       <h4>{getDateSummary(d)}</h4>
+                      {d.initiatedBy && (
+                        <span className={`initiated-badge initiated-${d.initiatedBy}`}>
+                          {INITIATED_BY_LABELS[d.initiatedBy]}
+                        </span>
+                      )}
                       {costMe > 0 && <span className="cost cost-me">我 ¥{formatCost(costMe)}</span>}
                       {costThem > 0 && <span className="cost cost-them">对方 ¥{formatCost(costThem)}</span>}
                     </div>
@@ -333,9 +337,6 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
 
       {/* 是否继续 */}
       <DecisionSection personId={person.id} decision={decision} onRefresh={onRefresh} />
-
-      {/* 纪念日提醒建议 */}
-      <AnniversarySuggestions personId={person.id} personName={person.name} onRefresh={onRefresh} />
 
       {/* 提醒 */}
       <ReminderSection personId={person.id} reminders={reminders} onRefresh={onRefresh} />

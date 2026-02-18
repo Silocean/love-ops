@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
-import type { PersonInfo, DateRecordItem, DateMiscExpense, PaidBy } from '../types'
-import { PAID_BY_LABELS } from '../constants'
+import type { PersonInfo, DateRecordItem, DateMiscExpense, PaidBy, InitiatedBy } from '../types'
+import { PAID_BY_LABELS, INITIATED_BY_LABELS } from '../constants'
 import { db } from '../storage'
 import { id, now, today } from '../utils'
 
@@ -39,6 +39,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? [])
   const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
+  const [initiatedBy, setInitiatedBy] = useState<InitiatedBy | ''>(existing?.initiatedBy ?? '')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const updateItem = (idx: number, updater: (it: DateRecordItem) => DateRecordItem) => {
@@ -92,6 +93,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
       notes,
       photos,
       tags,
+      initiatedBy: initiatedBy || undefined,
       updatedAt: ts,
     }
     if (existing) {
@@ -116,9 +118,23 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
         <h2>{existing ? '编辑约会' : '添加约会'} - {person.name}</h2>
       </div>
       <form className="date-form" onSubmit={handleSubmit}>
-        <div className="form-row">
-          <label>日期 *</label>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        <div className="form-row two-cols">
+          <div>
+            <label>日期 *</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          </div>
+          <div>
+            <label>谁主动发起</label>
+            <select
+              value={initiatedBy}
+              onChange={(e) => setInitiatedBy(e.target.value as InitiatedBy | '')}
+            >
+              <option value="">未填写</option>
+              {(Object.entries(INITIATED_BY_LABELS) as [InitiatedBy, string][]).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="form-section">

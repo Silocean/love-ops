@@ -1,5 +1,5 @@
 // 认识渠道
-export type MeetChannel = 'friend' | 'blind_date' | 'dating_app' | 'matchmaker' | 'other'
+export type MeetChannel = 'friend' | 'blind_date' | 'dating_app' | 'matchmaker' | 'family' | 'other'
 
 // 关系阶段
 export type RelationshipStage = 'initial' | 'getting_to_know' | 'dating' | 'considering' | 'ended'
@@ -47,6 +47,9 @@ export interface DateMiscExpense {
   paidBy: PaidBy
 }
 
+// 谁主动发起（约会）
+export type InitiatedBy = 'me' | 'them'
+
 // 一次约会 = 一天，可包含多条行程 + 零散消费
 export interface DateRecord {
   id: string
@@ -57,6 +60,7 @@ export interface DateRecord {
   notes: string
   photos: string[]
   tags?: string[]       // 约会标签，如：吃饭、看电影、旅行
+  initiatedBy?: InitiatedBy  // 谁主动发起
   createdAt: string
   updatedAt: string
 }

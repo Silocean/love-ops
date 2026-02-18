@@ -85,6 +85,7 @@ function migrateDateRecord(d: Record<string, unknown>): DateRecord {
     ...rec,
     miscExpenses: rec.miscExpenses ?? [],
     tags: rec.tags ?? [],
+    initiatedBy: rec.initiatedBy ?? undefined,
   })
   if (Array.isArray(d.items) && d.items.length > 0) {
     return ensureMisc(d as unknown as DateRecord)

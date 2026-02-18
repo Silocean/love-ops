@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
 import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost } from '../utils-date'
-import { STAGE_LABELS } from '../constants'
+import { STAGE_LABELS, INITIATED_BY_LABELS } from '../constants'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
@@ -64,6 +64,10 @@ export default function StatsView({ persons }: Props) {
     byStage[s] = (byStage[s] ?? 0) + 1
   }
 
+  const initiatedByMe = allDates.filter((d) => d.initiatedBy === 'me').length
+  const initiatedByThem = allDates.filter((d) => d.initiatedBy === 'them').length
+  const initiatedUnknown = allDates.length - initiatedByMe - initiatedByThem
+
   const recentDates = [...allDates].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10)
 
   return (
@@ -124,6 +128,47 @@ export default function StatsView({ persons }: Props) {
           <div className="stat-label">平均单次花费</div>
         </div>
       </div>
+
+      {allDates.length > 0 && (
+        <section className="stats-section card">
+          <h3>谁主动发起</h3>
+          <div className="stats-cards stats-cards-small">
+            <div className="stat-card card initiated-me-card">
+              <div className="stat-value">{initiatedByMe}</div>
+              <div className="stat-label">{INITIATED_BY_LABELS.me}</div>
+            </div>
+            <div className="stat-card card initiated-them-card">
+              <div className="stat-value">{initiatedByThem}</div>
+              <div className="stat-label">{INITIATED_BY_LABELS.them}</div>
+            </div>
+            <div className="stat-card card">
+              <div className="stat-value">{initiatedUnknown}</div>
+              <div className="stat-label">未填写</div>
+            </div>
+          </div>
+          {(initiatedByMe + initiatedByThem) > 0 && (
+            <div className="stage-bars" style={{ marginTop: '1rem' }}>
+              {(['me', 'them'] as const).map((key) => {
+                const count = key === 'me' ? initiatedByMe : initiatedByThem
+                const total = initiatedByMe + initiatedByThem
+                const pct = total > 0 ? (count / total) * 100 : 0
+                return (
+                  <div key={key} className="stage-bar">
+                    <span className="stage-label">{INITIATED_BY_LABELS[key]}</span>
+                    <div className="bar-wrap">
+                      <div
+                        className={`bar-fill ${key === 'me' ? 'initiated-me' : 'initiated-them'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="stage-count">{count} 次</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {allDates.length > 0 && (
         <section className="stats-section card">

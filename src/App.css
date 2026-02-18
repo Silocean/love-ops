@@ -631,6 +631,22 @@
   color: var(--success);
 }
 
+.initiated-badge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.initiated-badge.initiated-me {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.initiated-badge.initiated-them {
+  background: rgba(61, 124, 71, 0.15);
+  color: var(--success);
+}
+
 .cost-me-card .stat-value {
   color: var(--accent);
 }
@@ -983,18 +999,6 @@
   color: var(--text-muted);
 }
 
-.anniversary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.anniversary-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-}
 
 /* Reminders */
 .reminder-form {
@@ -1295,6 +1299,27 @@
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.stats-cards-small {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  margin-bottom: 0;
+}
+
+.initiated-me-card .stat-value {
+  color: var(--accent);
+}
+
+.initiated-them-card .stat-value {
+  color: var(--success);
+}
+
+.bar-fill.initiated-me {
+  background: var(--accent);
+}
+
+.bar-fill.initiated-them {
+  background: var(--success);
 }
 
 .stat-card {
