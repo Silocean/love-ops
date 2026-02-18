@@ -14,7 +14,8 @@ export interface PersonInfo {
   id: string
   name: string
   stage?: RelationshipStage
-  age?: number
+  birthDate?: string    // YYYY-MM-DD 出生日期，年龄据此自动计算
+  age?: number         // 兼容旧数据
   job?: string
   education?: string
   photos: string[]  // base64

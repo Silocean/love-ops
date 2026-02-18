@@ -705,6 +705,12 @@
   margin-bottom: 0.75rem;
 }
 
+.form-hint-inline {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+}
+
 .empty-hint.small {
   padding: 0.5rem;
   font-size: 0.9rem;

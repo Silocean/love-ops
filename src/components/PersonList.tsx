@@ -1,6 +1,7 @@
 import { Plus, ChevronRight, Users } from 'lucide-react'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
+import { getAgeFromBirthDate } from '../utils-date'
 import { STAGE_LABELS } from '../constants'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -51,11 +52,14 @@ export default function PersonList({ persons, onSelect, onAdd }: Props) {
                 </div>
                 <div className="person-card-body">
                   <h3>{p.name}</h3>
-                  {(p.age || p.job) && (
-                    <p className="person-meta">
-                      {[p.age && `${p.age}岁`, p.job].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
+                  {(() => {
+                    const age = p.birthDate ? getAgeFromBirthDate(p.birthDate) : p.age
+                    return (age || p.job) && (
+                      <p className="person-meta">
+                        {[age && `${age}岁`, p.job].filter(Boolean).join(' · ')}
+                      </p>
+                    )
+                  })()}
                   {stage && (
                     <span className="stage-badge">{STAGE_LABELS[stage as keyof typeof STAGE_LABELS] || stage}</span>
                   )}

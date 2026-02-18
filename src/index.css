@@ -17,6 +17,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #1a1814;
   --bg-card: #252220;
   --text: #ebe6e0;
@@ -32,6 +33,25 @@
 
 [data-theme="dark"] .day-event {
   background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+[data-theme="dark"] select option {
+  background: var(--bg-card);
+  color: var(--text);
 }
 
 * {

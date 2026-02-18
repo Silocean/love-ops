@@ -5,7 +5,7 @@ import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
 import { db, exportBackup, importBackup, type BackupData } from '../storage'
 import { STAGE_LABELS, MEET_CHANNEL_LABELS, DECISION_LABELS, PAID_BY_LABELS } from '../constants'
-import { getDateTotalCost, formatCost } from '../utils-date'
+import { getDateTotalCost, formatCost, getAgeFromBirthDate } from '../utils-date'
 
 interface Props {
   persons: PersonInfo[]
@@ -32,7 +32,8 @@ export default function ExportView({ persons, onRefresh }: Props) {
     lines.push('')
     lines.push('## 基本信息')
     lines.push(`- 姓名：${p.name}`)
-    if (p.age) lines.push(`- 年龄：${p.age}岁`)
+    const age = p.birthDate ? getAgeFromBirthDate(p.birthDate) : p.age
+    if (age != null) lines.push(`- 年龄：${age}岁`)
     if (p.job) lines.push(`- 职业：${p.job}`)
     if (p.education) lines.push(`- 学历：${p.education}`)
     if (p.stage) lines.push(`- 阶段：${STAGE_LABELS[p.stage]}`)

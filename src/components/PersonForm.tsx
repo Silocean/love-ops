@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { PersonInfo, MeetChannel } from '../types'
 import { id, now } from '../utils'
+import { getAgeFromBirthDate } from '../utils-date'
 import { db } from '../storage'
 import { MEET_CHANNEL_LABELS, STAGE_LABELS } from '../constants'
 import type { RelationshipStage } from '../types'
@@ -13,7 +14,7 @@ interface Props {
 
 export default function PersonForm({ person, onSave, onCancel }: Props) {
   const [name, setName] = useState('')
-  const [age, setAge] = useState('')
+  const [birthDate, setBirthDate] = useState('')
   const [job, setJob] = useState('')
   const [education, setEducation] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
@@ -27,10 +28,15 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
   const [stage, setStage] = useState<RelationshipStage>('initial')
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const estimatedBirthDateFromAge = (age: number): string => {
+    const y = new Date().getFullYear() - age
+    return `${y}-01-01`
+  }
+
   useEffect(() => {
     if (person) {
       setName(person.name)
-      setAge(person.age?.toString() ?? '')
+      setBirthDate(person.birthDate ?? (person.age ? estimatedBirthDateFromAge(person.age) : ''))
       setJob(person.job ?? '')
       setEducation(person.education ?? '')
       setPhotos(person.photos ?? [])
@@ -61,11 +67,13 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const ts = now()
+    const computedAge = birthDate ? getAgeFromBirthDate(birthDate) : undefined
     if (person) {
       db.persons.update(person.id, (p) => ({
         ...p,
         name,
-        age: age ? parseInt(age, 10) : undefined,
+        birthDate: birthDate || undefined,
+        age: computedAge,
         job: job || undefined,
         education: education || undefined,
         photos,
@@ -83,7 +91,8 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
       db.persons.add({
         id: id(),
         name,
-        age: age ? parseInt(age, 10) : undefined,
+        birthDate: birthDate || undefined,
+        age: computedAge,
         job: job || undefined,
         education: education || undefined,
         photos,
@@ -120,8 +129,13 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
           </div>
           <div className="form-row two-cols">
             <div>
-              <label>年龄</label>
-              <input type="number" value={age} onWheel={(e) => e.currentTarget.blur()} onChange={(e) => setAge(e.target.value)} placeholder="岁" min={18} />
+              <label>出生日期</label>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+              {birthDate && (
+                <span className="form-hint-inline">
+                  {getAgeFromBirthDate(birthDate) ?? '-'} 岁
+                </span>
+              )}
             </div>
             <div>
               <label>职业</label>

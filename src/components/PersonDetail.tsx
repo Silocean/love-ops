@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
-import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost } from '../utils-date'
+import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost, getAgeFromBirthDate } from '../utils-date'
 import { STAGE_LABELS, PAID_BY_LABELS, INITIATED_BY_LABELS } from '../constants'
 import ImpressionSection from './ImpressionSection'
 import MilestoneSection from './MilestoneSection'
@@ -119,11 +119,14 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
         </div>
         <div className="detail-meta">
           <h3>{person.name}</h3>
-          {(person.age || person.job) && (
-            <p className="meta-line">
-              {[person.age && `${person.age}岁`, person.job].filter(Boolean).join(' · ')}
-            </p>
-          )}
+          {(() => {
+            const age = person.birthDate ? getAgeFromBirthDate(person.birthDate) : person.age
+            return (age || person.job) && (
+              <p className="meta-line">
+                {[age && `${age}岁`, person.job].filter(Boolean).join(' · ')}
+              </p>
+            )
+          })()}
           {person.stage && (
             <span className="stage-badge">{STAGE_LABELS[person.stage]}</span>
           )}
