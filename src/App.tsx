@@ -112,6 +112,12 @@ function App() {
             onHighlightDone={() => setScrollToDateId(null)}
             onBack={() => setPage('list')}
             onEdit={() => setPage('person-form')}
+            onDelete={() => {
+              db.persons.deleteWithData(selectedPerson.id)
+              setSelectedPerson(null)
+              refresh()
+              setPage('list')
+            }}
             onAddDate={() => {
               setEditingDateId(null)
               setPage('date-form')
@@ -129,9 +135,15 @@ function App() {
             person={selectedPerson}
             onSave={() => {
               refresh()
+              const editingId = selectedPerson?.id
               const saved = db.persons.getAll()
-              setSelectedPerson(saved[saved.length - 1] ?? null)
-              setPage(selectedPerson ? 'detail' : 'list')
+              if (editingId) {
+                setSelectedPerson(saved.find((p) => p.id === editingId) ?? saved[saved.length - 1] ?? null)
+                setPage('detail')
+              } else {
+                setSelectedPerson(saved[saved.length - 1] ?? null)
+                setPage(saved.length > 0 ? 'detail' : 'list')
+              }
             }}
             onCancel={() => setPage(selectedPerson ? 'detail' : 'list')}
           />

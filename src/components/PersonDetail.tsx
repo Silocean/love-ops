@@ -14,6 +14,7 @@ import DecisionSection from './DecisionSection'
 import ReminderSection from './ReminderSection'
 import PhotoViewer from './PhotoViewer'
 import AnniversarySuggestions from './AnniversarySuggestions'
+import ConfirmModal from './ConfirmModal'
 
 interface Props {
   person: PersonInfo
@@ -21,15 +22,19 @@ interface Props {
   onHighlightDone?: () => void
   onBack: () => void
   onEdit: () => void
+  onDelete: () => void
   onAddDate: () => void
   onEditDate: (dateId: string) => void
   onRefresh: () => void
 }
 
-export default function PersonDetail({ person, highlightDateId, onHighlightDone, onBack, onEdit, onAddDate, onEditDate, onRefresh }: Props) {
+export default function PersonDetail({ person, highlightDateId, onHighlightDone, onBack, onEdit, onDelete, onAddDate, onEditDate, onRefresh }: Props) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [datesSectionCollapsed, setDatesSectionCollapsed] = useState(false)
   const [photoViewer, setPhotoViewer] = useState<{ photos: string[]; index: number } | null>(null)
+  const [avatarViewerOpen, setAvatarViewerOpen] = useState(false)
+  const [confirmDeletePerson, setConfirmDeletePerson] = useState(false)
+  const [confirmDeleteDate, setConfirmDeleteDate] = useState<{ dateId: string } | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const dates = db.dates.getByPerson(person.id)
 
@@ -89,11 +94,24 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
           <ArrowLeft size={20} />
         </button>
         <h2>{person.name}</h2>
-        <button className="btn btn-ghost" onClick={onEdit}>编辑</button>
+        <div className="header-actions">
+          <button className="btn btn-ghost" onClick={onEdit}>编辑</button>
+          <button
+            className="btn btn-ghost icon-btn"
+            onClick={() => setConfirmDeletePerson(true)}
+            title="删除人选"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="detail-hero card">
-        <div className="detail-avatar">
+        <div
+          className={`detail-avatar ${person.photos.length > 0 ? 'clickable' : ''}`}
+          onClick={() => person.photos.length > 0 && setAvatarViewerOpen(true)}
+          role={person.photos.length > 0 ? 'button' : undefined}
+        >
           {person.photos[0] ? (
             <img src={person.photos[0]} alt={person.name} />
           ) : (
@@ -286,10 +304,7 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
                   className="timeline-delete btn btn-ghost icon-btn"
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (confirm('确定删除这条约会记录？')) {
-                      db.dates.delete(d.id)
-                      onRefresh()
-                    }
+                    setConfirmDeleteDate({ dateId: d.id })
                   }}
                   title="删除"
                 >
@@ -325,11 +340,39 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
       {/* 提醒 */}
       <ReminderSection personId={person.id} reminders={reminders} onRefresh={onRefresh} />
 
-      {photoViewer && (
+      {confirmDeletePerson && (
+        <ConfirmModal
+          title="删除人选"
+          message={`确定要删除「${person.name}」吗？其所有约会记录、印象、提醒等数据将一并删除，此操作不可恢复。`}
+          confirmText="删除"
+          cancelText="取消"
+          danger
+          onConfirm={onDelete}
+          onCancel={() => setConfirmDeletePerson(false)}
+        />
+      )}
+      {confirmDeleteDate && (
+        <ConfirmModal
+          title="删除约会记录"
+          message="确定删除这条约会记录吗？此操作不可恢复。"
+          confirmText="删除"
+          cancelText="取消"
+          danger
+          onConfirm={() => {
+            db.dates.delete(confirmDeleteDate.dateId)
+            onRefresh()
+          }}
+          onCancel={() => setConfirmDeleteDate(null)}
+        />
+      )}
+      {(photoViewer || avatarViewerOpen) && (
         <PhotoViewer
-          photos={photoViewer.photos}
-          initialIndex={photoViewer.index}
-          onClose={() => setPhotoViewer(null)}
+          photos={photoViewer?.photos ?? person.photos}
+          initialIndex={photoViewer?.index ?? 0}
+          onClose={() => {
+            setPhotoViewer(null)
+            setAvatarViewerOpen(false)
+          }}
         />
       )}
     </div>

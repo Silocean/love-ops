@@ -293,6 +293,14 @@
   object-fit: cover;
 }
 
+.detail-avatar.clickable {
+  cursor: pointer;
+}
+
+.detail-avatar.clickable:hover {
+  opacity: 0.9;
+}
+
 .detail-meta h3 {
   font-size: 1.35rem;
   margin-bottom: 0.25rem;
@@ -1824,6 +1832,28 @@
 .person-picker-meta {
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+.confirm-modal .confirm-modal-message {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-danger {
+  background: #c45c3e;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b35038;
+  color: white;
 }
 
 /* Photo Viewer */

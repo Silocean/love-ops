@@ -144,6 +144,16 @@ export const db = {
       const list = db.persons.getAll().filter((x) => x.id !== id)
       db.persons.save(list)
     },
+    deleteWithData: (personId: string) => {
+      db.dates.save(db.dates.getAll().filter((d) => d.personId !== personId))
+      db.milestones.save(db.milestones.getAll().filter((m) => m.personId !== personId))
+      db.impressions.save(db.impressions.getAll().filter((i) => i.personId !== personId))
+      db.questions.save(db.questions.getAll().filter((q) => q.personId !== personId))
+      db.plans.save(db.plans.getAll().filter((p) => p.personId !== personId))
+      db.decisions.save(db.decisions.getAll().filter((d) => d.personId !== personId))
+      db.reminders.save(db.reminders.getAll().filter((r) => r.personId !== personId))
+      db.persons.delete(personId)
+    },
   },
   dates: {
     getAll: () => loadDates(),
