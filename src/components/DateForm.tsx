@@ -112,7 +112,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
   return (
     <div className="page form-page">
       <div className="page-header">
-        <button className="btn btn-ghost icon-btn" onClick={onCancel}>
+        <button type="button" className="btn btn-ghost icon-btn" onClick={onCancel}>
           <ArrowLeft size={20} />
         </button>
         <h2>{existing ? '编辑约会' : '添加约会'} - {person.name}</h2>

@@ -116,8 +116,8 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
       <div className="page-header">
         <h2>{person ? '编辑人选' : '添加人选'}</h2>
         <div className="header-actions">
-          <button className="btn btn-ghost" onClick={onCancel}>取消</button>
-          <button className="btn btn-primary" onClick={handleSubmit}>保存</button>
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>取消</button>
+          <button type="button" className="btn btn-primary" onClick={handleSubmit}>保存</button>
         </div>
       </div>
       <form className="person-form" onSubmit={handleSubmit}>

@@ -25,7 +25,7 @@ import PersonPickerModal from './components/PersonPickerModal'
 import OnboardingGuide from './components/OnboardingGuide'
 import { useTheme } from './context/ThemeContext'
 
-type Page = 'list' | 'detail' | 'person-form' | 'date-form' | 'calendar' | 'stats' | 'search' | 'export'
+type Page = 'list' | 'detail' | 'calendar' | 'stats' | 'search' | 'export' | 'person-form' | 'date-form'
 
 function App() {
   const { theme, setTheme } = useTheme()
@@ -120,52 +120,15 @@ function App() {
             }}
             onAddDate={() => {
               setEditingDateId(null)
+              setPresetDate(null)
               setPage('date-form')
             }}
             onEditDate={(id) => {
               setEditingDateId(id)
+              setPresetDate(null)
               setPage('date-form')
             }}
             onRefresh={refresh}
-          />
-        )}
-
-        {page === 'person-form' && (
-          <PersonForm
-            person={selectedPerson}
-            onSave={() => {
-              refresh()
-              const editingId = selectedPerson?.id
-              const saved = db.persons.getAll()
-              if (editingId) {
-                setSelectedPerson(saved.find((p) => p.id === editingId) ?? saved[saved.length - 1] ?? null)
-                setPage('detail')
-              } else {
-                setSelectedPerson(saved[saved.length - 1] ?? null)
-                setPage(saved.length > 0 ? 'detail' : 'list')
-              }
-            }}
-            onCancel={() => setPage(selectedPerson ? 'detail' : 'list')}
-          />
-        )}
-
-        {page === 'date-form' && selectedPerson && (
-          <DateForm
-            person={selectedPerson}
-            editDateId={editingDateId}
-            presetDate={presetDate ?? undefined}
-            onSave={() => {
-              setEditingDateId(null)
-              setPresetDate(null)
-              setQuickAddDate(null)
-              setPage('detail')
-            }}
-            onCancel={() => {
-              setEditingDateId(null)
-              setPresetDate(null)
-              setQuickAddDate(null)
-              setPage('detail')
-            }}
           />
         )}
 
@@ -203,6 +166,46 @@ function App() {
         {page === 'export' && (
           <ExportView persons={persons} onRefresh={refresh} />
         )}
+
+        {page === 'person-form' && (
+          <PersonForm
+            person={selectedPerson}
+            onSave={() => {
+              refresh()
+              const editingId = selectedPerson?.id
+              const saved = db.persons.getAll()
+              if (editingId) {
+                setSelectedPerson(saved.find((p) => p.id === editingId) ?? saved[saved.length - 1] ?? null)
+                setPage('detail')
+              } else {
+                setSelectedPerson(saved[saved.length - 1] ?? null)
+                setPage(saved.length > 0 ? 'detail' : 'list')
+              }
+            }}
+            onCancel={() => {
+              if (selectedPerson) setPage('detail')
+              else setPage('list')
+            }}
+          />
+        )}
+
+        {page === 'date-form' && selectedPerson && (
+          <DateForm
+            person={selectedPerson}
+            editDateId={editingDateId}
+            presetDate={presetDate ?? undefined}
+            onSave={() => {
+              setEditingDateId(null)
+              setPresetDate(null)
+              setPage('detail')
+            }}
+            onCancel={() => {
+              setEditingDateId(null)
+              setPresetDate(null)
+              setPage('detail')
+            }}
+          />
+        )}
       </main>
 
       {quickAddDate && persons.length > 0 && (
@@ -219,6 +222,7 @@ function App() {
           onClose={() => setQuickAddDate(null)}
         />
       )}
+
     </div>
   )
 }

@@ -796,8 +796,14 @@
 
 .form-actions {
   display: flex;
+  justify-content: center;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+.form-actions .btn {
+  min-width: 5.5rem;
+  justify-content: center;
 }
 
 .photo-grid {
@@ -1229,6 +1235,11 @@
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
+  opacity: 0;
+}
+
+.calendar-day:hover .day-add-btn {
+  opacity: 1;
 }
 
 .day-add-btn:hover {

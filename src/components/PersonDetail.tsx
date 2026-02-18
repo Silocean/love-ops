@@ -94,7 +94,7 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
         </button>
         <h2>{person.name}</h2>
         <div className="header-actions">
-          <button className="btn btn-ghost" onClick={onEdit}>编辑</button>
+          <button className="btn btn-ghost" onClick={onEdit}>编辑人选</button>
           <button
             className="btn btn-ghost icon-btn"
             onClick={() => setConfirmDeletePerson(true)}

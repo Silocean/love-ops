@@ -54,10 +54,38 @@
   color: var(--text);
 }
 
+/* 暗色模式：滚动条与主题协调 */
+[data-theme="dark"] {
+  scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin;
+}
+
+[data-theme="dark"]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"]::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+[data-theme="dark"]::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  overflow-y: scroll;
 }
 
 body {
