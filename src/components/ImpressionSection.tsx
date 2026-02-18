@@ -3,6 +3,7 @@ import { Star } from 'lucide-react'
 import type { Impression } from '../types'
 import { db } from '../storage'
 import { id, now } from '../utils'
+import InputModal from './InputModal'
 
 interface Props {
   personId: string
@@ -19,12 +20,10 @@ export default function ImpressionSection({ personId, impression, onRefresh }: P
   const [personality, setPersonality] = useState(impression?.personality ?? '')
   const [values, setValues] = useState(impression?.values ?? '')
   const [habits, setHabits] = useState(impression?.habits ?? '')
+  const [addModal, setAddModal] = useState<{ label: string; setter: (a: string[]) => void; arr: string[] } | null>(null)
 
-  const addItem = (arr: string[], setter: (a: string[]) => void, placeholder: string) => {
-    const v = prompt(`添加${placeholder}`)
-    if (v?.trim()) {
-      setter([...arr, v.trim()])
-    }
+  const addItem = (arr: string[], setter: (a: string[]) => void, label: string) => {
+    setAddModal({ label, setter, arr })
   }
 
   const removeItem = (arr: string[], setter: (a: string[]) => void, i: number) => {
@@ -168,6 +167,15 @@ export default function ImpressionSection({ personId, impression, onRefresh }: P
             </>
           )}
         </div>
+      )}
+
+      {addModal && (
+        <InputModal
+          title={`添加${addModal.label}`}
+          placeholder={`请输入${addModal.label}`}
+          onConfirm={(v) => addModal.setter([...addModal.arr, v])}
+          onCancel={() => setAddModal(null)}
+        />
       )}
     </section>
   )

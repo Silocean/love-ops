@@ -43,6 +43,12 @@ function App() {
     refresh()
   }, [])
 
+  useEffect(() => {
+    if (page === 'date-form') {
+      window.scrollTo(0, 0)
+    }
+  }, [page])
+
   const nav = [
     { id: 'list' as const, icon: Users, label: '人选' },
     { id: 'calendar' as const, icon: Calendar, label: '日历' },

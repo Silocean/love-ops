@@ -273,7 +273,12 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
                           ))}
                         </div>
                       )}
-                      {d.notes && <p className="timeline-notes">{d.notes}</p>}
+                      {d.notes && (
+                        <div className="timeline-notes-block">
+                          <span className="timeline-notes-label">感想</span>
+                          <p className="timeline-notes">{d.notes}</p>
+                        </div>
+                      )}
                       {d.photos.length > 0 && (
                         <div className="timeline-photos">
                           {d.photos.slice(0, 5).map((src, i) => (

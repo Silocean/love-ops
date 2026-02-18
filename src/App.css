@@ -521,10 +521,28 @@
   margin-right: 0.25rem;
 }
 
+.timeline-notes-block {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.timeline-notes-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
 .timeline-notes {
   font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .timeline-items {
@@ -1874,6 +1892,31 @@
 .person-picker-meta {
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+.input-modal .input-modal-body {
+  margin-bottom: 1rem;
+}
+
+.input-modal .input-modal-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.input-modal .input-modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input-modal .input-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .confirm-modal .confirm-modal-message {
