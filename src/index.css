@@ -1,0 +1,42 @@
+:root {
+  --bg: #faf8f5;
+  --bg-card: #ffffff;
+  --text: #2c2416;
+  --text-muted: #6b5d4a;
+  --accent: #c45c3e;
+  --accent-soft: #e8a090;
+  --accent-bg: #fdf2ef;
+  --border: #e8e2db;
+  --success: #3d7c47;
+  --warning: #b8860b;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(44, 36, 22, 0.06);
+  --font-serif: 'Noto Serif SC', serif;
+  --font-sans: 'DM Sans', -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+}
