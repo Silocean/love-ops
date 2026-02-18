@@ -56,6 +56,7 @@ export interface DateRecord {
   miscExpenses: DateMiscExpense[]  // 零散消费
   notes: string
   photos: string[]
+  tags?: string[]       // 约会标签，如：吃饭、看电影、旅行
   createdAt: string
   updatedAt: string
 }

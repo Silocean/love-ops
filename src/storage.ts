@@ -11,7 +11,7 @@ import type {
 } from './types'
 import { id } from './utils'
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   persons: 'love-ops-persons',
   dates: 'love-ops-dates',
   milestones: 'love-ops-milestones',
@@ -21,6 +21,53 @@ const STORAGE_KEYS = {
   decisions: 'love-ops-decisions',
   reminders: 'love-ops-reminders',
 } as const
+
+export interface BackupData {
+  version: number
+  exportedAt: string
+  persons: PersonInfo[]
+  dates: DateRecord[]
+  milestones: Milestone[]
+  impressions: Impression[]
+  questions: PendingQuestion[]
+  plans: NextPlan[]
+  decisions: Decision[]
+  reminders: Reminder[]
+}
+
+export function exportBackup(): BackupData {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    persons: db.persons.getAll(),
+    dates: db.dates.getAll(),
+    milestones: db.milestones.getAll(),
+    impressions: db.impressions.getAll(),
+    questions: db.questions.getAll(),
+    plans: db.plans.getAll(),
+    decisions: db.decisions.getAll(),
+    reminders: db.reminders.getAll(),
+  }
+}
+
+export function importBackup(data: BackupData): { ok: boolean; error?: string } {
+  try {
+    if (!data.version || !Array.isArray(data.persons)) {
+      return { ok: false, error: '无效的备份文件格式' }
+    }
+    db.persons.save(data.persons ?? [])
+    db.dates.save(data.dates ?? [])
+    db.milestones.save(data.milestones ?? [])
+    db.impressions.save(data.impressions ?? [])
+    db.questions.save(data.questions ?? [])
+    db.plans.save(data.plans ?? [])
+    db.decisions.save(data.decisions ?? [])
+    db.reminders.save(data.reminders ?? [])
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: String(e) }
+  }
+}
 
 function load<T>(key: string, defaultValue: T): T {
   try {
@@ -37,6 +84,7 @@ function migrateDateRecord(d: Record<string, unknown>): DateRecord {
   const ensureMisc = (rec: DateRecord) => ({
     ...rec,
     miscExpenses: rec.miscExpenses ?? [],
+    tags: rec.tags ?? [],
   })
   if (Array.isArray(d.items) && d.items.length > 0) {
     return ensureMisc(d as unknown as DateRecord)
@@ -56,6 +104,7 @@ function migrateDateRecord(d: Record<string, unknown>): DateRecord {
     miscExpenses: [],
     notes: (d.notes as string) ?? '',
     photos: Array.isArray(d.photos) ? d.photos : [],
+    tags: Array.isArray((d as { tags?: string[] }).tags) ? (d as { tags: string[] }).tags : [],
   } as unknown as DateRecord)
 }
 

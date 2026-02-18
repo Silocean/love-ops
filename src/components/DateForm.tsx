@@ -8,6 +8,7 @@ import { id, now, today } from '../utils'
 interface Props {
   person: PersonInfo
   editDateId: string | null
+  presetDate?: string  // 预设日期，如从日历点击传入
   onSave: () => void
   onCancel: () => void
 }
@@ -25,10 +26,10 @@ const emptyMisc = (): DateMiscExpense => ({
   paidBy: 'me',
 })
 
-export default function DateForm({ person, editDateId, onSave, onCancel }: Props) {
+export default function DateForm({ person, editDateId, presetDate, onSave, onCancel }: Props) {
   const existing = editDateId ? db.dates.getAll().find((d) => d.id === editDateId) : null
 
-  const [date, setDate] = useState(existing?.date ?? today())
+  const [date, setDate] = useState(existing?.date ?? presetDate ?? today())
   const [items, setItems] = useState<DateRecordItem[]>(
     existing?.items?.length ? [...existing.items] : [emptyItem()]
   )
@@ -37,6 +38,7 @@ export default function DateForm({ person, editDateId, onSave, onCancel }: Props
   )
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? [])
+  const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const fileRef = useRef<HTMLInputElement>(null)
 
   const updateItem = (idx: number, updater: (it: DateRecordItem) => DateRecordItem) => {
@@ -66,6 +68,14 @@ export default function DateForm({ person, editDateId, onSave, onCancel }: Props
 
   const removePhoto = (i: number) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))
 
+  const [tagInput, setTagInput] = useState('')
+  const addTag = () => {
+    const t = tagInput.trim()
+    if (t && !tags.includes(t)) setTags((prev) => [...prev, t])
+    setTagInput('')
+  }
+  const removeTag = (i: number) => setTags((prev) => prev.filter((_, idx) => idx !== i))
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const validItems = items.filter((it) => it.activity.trim())
@@ -81,6 +91,7 @@ export default function DateForm({ person, editDateId, onSave, onCancel }: Props
       miscExpenses: validMisc,
       notes,
       photos,
+      tags,
       updatedAt: ts,
     }
     if (existing) {
@@ -247,6 +258,28 @@ export default function DateForm({ person, editDateId, onSave, onCancel }: Props
           )}
         </div>
 
+        <div className="form-row">
+          <label>标签（可选）</label>
+          <div className="inline-form">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+              placeholder="如：吃饭、看电影"
+            />
+            <button type="button" className="btn btn-ghost btn-sm" onClick={addTag}>添加</button>
+          </div>
+          {tags.length > 0 && (
+            <div className="tags tag-input-list" style={{ marginTop: '0.5rem' }}>
+              {tags.map((t, i) => (
+                <span key={`${t}-${i}`} className="tag">
+                  {t}
+                  <button type="button" className="tag-remove" onClick={() => removeTag(i)} aria-label="删除">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="form-row">
           <label>整体感想/备注</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="记录这次约会的感受..." rows={4} />

@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
-import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
 
@@ -40,7 +38,8 @@ export default function SearchView({ persons, onSelectPerson }: Props) {
       for (const d of dates) {
         const itemsText = d.items.map((it) => [it.location, it.activity].filter(Boolean).join(' ')).join(' ')
         const miscText = (d.miscExpenses ?? []).map((m) => m.activity).join(' ')
-        const searchable = `${itemsText} ${miscText} ${d.notes}`.toLowerCase()
+        const tagsText = (d.tags ?? []).join(' ')
+        const searchable = `${itemsText} ${miscText} ${tagsText} ${d.notes}`.toLowerCase()
         if (searchable.includes(q)) {
           matches.push({
             person: p,
@@ -83,7 +82,7 @@ export default function SearchView({ persons, onSelectPerson }: Props) {
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="搜索姓名、地点、活动、印象..."
+          placeholder="搜索姓名、地点、活动、标签、印象..."
         />
         <button className="btn btn-primary" onClick={handleSearch}>搜索</button>
       </div>

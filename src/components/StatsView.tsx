@@ -10,14 +10,46 @@ interface Props {
   persons: PersonInfo[]
 }
 
+type TimeRange = 'all' | 'week' | 'month' | 'year'
+
+const getRangeStart = (range: TimeRange): string => {
+  const now = new Date()
+  switch (range) {
+    case 'week': {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 7)
+      return d.toISOString().slice(0, 10)
+    }
+    case 'month': {
+      const d = new Date(now)
+      d.setMonth(d.getMonth() - 1)
+      return d.toISOString().slice(0, 10)
+    }
+    case 'year': {
+      const d = new Date(now)
+      d.setFullYear(d.getFullYear() - 1)
+      return d.toISOString().slice(0, 10)
+    }
+    default:
+      return '0000-01-01'
+  }
+}
+
 export default function StatsView({ persons }: Props) {
   const [filterPersonId, setFilterPersonId] = useState<string>('')
+  const [timeRange, setTimeRange] = useState<TimeRange>('all')
 
   const allDatesRaw = db.dates.getAll()
-  const allDates =
+  const personFiltered =
     filterPersonId === ''
       ? allDatesRaw
       : allDatesRaw.filter((d) => d.personId === filterPersonId)
+
+  const rangeStart = getRangeStart(timeRange)
+  const allDates =
+    timeRange === 'all'
+      ? personFiltered
+      : personFiltered.filter((d) => d.date >= rangeStart)
 
   const totalDates = allDates.length
   const totalCost = allDates.reduce((s, d) => s + getDateTotalCost(d), 0)
@@ -38,17 +70,31 @@ export default function StatsView({ persons }: Props) {
     <div className="page stats-page">
       <div className="stats-page-header">
         <h2>统计概览</h2>
-        <div className="stats-filter">
-          <label>对象筛选：</label>
-          <select
-            value={filterPersonId}
-            onChange={(e) => setFilterPersonId(e.target.value)}
-          >
-            <option value="">全部</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+        <div className="stats-filters">
+          <div className="stats-filter">
+            <label>对象：</label>
+            <select
+              value={filterPersonId}
+              onChange={(e) => setFilterPersonId(e.target.value)}
+            >
+              <option value="">全部</option>
+              {persons.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="stats-filter">
+            <label>时间：</label>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+            >
+              <option value="all">全部</option>
+              <option value="week">近一周</option>
+              <option value="month">近一月</option>
+              <option value="year">近一年</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -171,6 +217,34 @@ export default function StatsView({ persons }: Props) {
           ))}
         </div>
       </section>
+
+      {allDates.length > 0 && (() => {
+        const locationCount: Record<string, number> = {}
+        for (const d of allDates) {
+          for (const it of d.items) {
+            if (it.location?.trim()) {
+              const loc = it.location.trim()
+              locationCount[loc] = (locationCount[loc] ?? 0) + 1
+            }
+          }
+        }
+        const topLocations = Object.entries(locationCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+        return topLocations.length > 0 ? (
+          <section className="stats-section card">
+            <h3>常去地点</h3>
+            <ul className="location-stats">
+              {topLocations.map(([loc, count]) => (
+                <li key={loc}>
+                  <span className="location-name">{loc}</span>
+                  <span className="location-count">{count} 次</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null
+      })()}
 
       <section className="stats-section card">
         <h3>最近约会</h3>

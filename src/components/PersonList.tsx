@@ -1,4 +1,4 @@
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, Users } from 'lucide-react'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
 import { STAGE_LABELS } from '../constants'
@@ -13,9 +13,6 @@ interface Props {
 }
 
 export default function PersonList({ persons, onSelect, onAdd }: Props) {
-  const stageKey = 'stage' as keyof PersonInfo
-  // We'll store stage in a simple way - for now assume we have a stage field
-  // We need to add stage to PersonInfo - let me check types
   return (
     <div className="page person-list-page">
       <div className="page-header">
@@ -26,8 +23,12 @@ export default function PersonList({ persons, onSelect, onAdd }: Props) {
         </button>
       </div>
       {persons.length === 0 ? (
-        <div className="empty-state">
-          <p>还没有添加人选，点击上方按钮开始记录</p>
+        <div className="empty-state empty-state-illustrated">
+          <div className="empty-state-icon">
+            <Users size={48} />
+          </div>
+          <h3>还没有人选</h3>
+          <p>点击上方「添加人选」开始记录你的相亲之旅</p>
         </div>
       ) : (
         <div className="person-cards">

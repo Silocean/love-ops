@@ -1,0 +1,16 @@
+{
+  "name": "对象分析系统 - Love Ops",
+  "short_name": "Love Ops",
+  "description": "相亲约会记录与分析",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#c45c3e",
+  "background_color": "#faf8f5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}

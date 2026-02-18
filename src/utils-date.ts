@@ -1,4 +1,4 @@
-import type { DateRecord, DateRecordItem } from './types'
+import type { DateRecord } from './types'
 
 export function formatCost(cost: number): string {
   return cost.toFixed(2)

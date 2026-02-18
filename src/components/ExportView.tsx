@@ -1,19 +1,22 @@
-import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Download, Upload, FileJson } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
-import { db } from '../storage'
+import { db, exportBackup, importBackup, type BackupData } from '../storage'
 import { STAGE_LABELS, MEET_CHANNEL_LABELS, DECISION_LABELS, PAID_BY_LABELS } from '../constants'
 import { getDateTotalCost, formatCost } from '../utils-date'
 
 interface Props {
   persons: PersonInfo[]
+  onRefresh: () => void
 }
 
-export default function ExportView({ persons }: Props) {
+export default function ExportView({ persons, onRefresh }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [formatType, setFormatType] = useState<'md' | 'txt'>('md')
+  const [importMsg, setImportMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const exportOne = (p: PersonInfo) => {
     const dates = db.dates.getByPerson(p.id)
@@ -121,31 +124,99 @@ export default function ExportView({ persons }: Props) {
     URL.revokeObjectURL(a.href)
   }
 
+  const handleBackupExport = () => {
+    const data = exportBackup()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `love-ops-备份-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  const handleBackupImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportMsg(null)
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string) as BackupData
+        const result = importBackup(data)
+        if (result.ok) {
+          setImportMsg({ type: 'ok', text: '恢复成功，请刷新页面' })
+          onRefresh()
+          setTimeout(() => window.location.reload(), 500)
+        } else {
+          setImportMsg({ type: 'err', text: result.error ?? '未知错误' })
+        }
+      } catch {
+        setImportMsg({ type: 'err', text: '无效的 JSON 文件' })
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   return (
     <div className="page export-page">
-      <h2>导出</h2>
-      <div className="export-form card">
-        <div className="form-row">
-          <label>导出范围</label>
-          <select value={selectedId ?? ''} onChange={(e) => setSelectedId(e.target.value || null)}>
-            <option value="">全部人选</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+      <h2>导出与备份</h2>
+
+      <section className="export-section card">
+        <h3 className="section-title">数据备份</h3>
+        <p className="form-hint">导出完整 JSON 备份，可用于恢复或迁移数据</p>
+        <div className="export-actions">
+          <button className="btn btn-primary" onClick={handleBackupExport}>
+            <FileJson size={18} />
+            导出备份 (JSON)
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleBackupImport}
+            style={{ display: 'none' }}
+          />
+          <button
+            className="btn btn-ghost"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={18} />
+            从备份恢复
+          </button>
         </div>
-        <div className="form-row">
-          <label>格式</label>
-          <select value={formatType} onChange={(e) => setFormatType(e.target.value as 'md' | 'txt')}>
-            <option value="md">Markdown</option>
-            <option value="txt">纯文本</option>
-          </select>
+        {importMsg && (
+          <p className={`import-msg ${importMsg.type}`}>
+            {importMsg.text}
+          </p>
+        )}
+      </section>
+
+      <section className="export-section card">
+        <h3 className="section-title">导出为文档</h3>
+        <div className="export-form">
+          <div className="form-row">
+            <label>导出范围</label>
+            <select value={selectedId ?? ''} onChange={(e) => setSelectedId(e.target.value || null)}>
+              <option value="">全部人选</option>
+              {persons.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-row">
+            <label>格式</label>
+            <select value={formatType} onChange={(e) => setFormatType(e.target.value as 'md' | 'txt')}>
+              <option value="md">Markdown</option>
+              <option value="txt">纯文本</option>
+            </select>
+          </div>
+          <button className="btn btn-primary" onClick={handleExport}>
+            <Download size={18} />
+            下载导出文件
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={handleExport}>
-          <Download size={18} />
-          下载导出文件
-        </button>
-      </div>
+      </section>
     </div>
   )
 }

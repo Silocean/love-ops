@@ -1,20 +1,24 @@
-import { useState } from 'react'
-import { ArrowLeft, Plus, Calendar, Target, Heart, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useLayoutEffect } from 'react'
+import { ArrowLeft, Plus, Calendar, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { PersonInfo } from '../types'
 import { db } from '../storage'
 import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost } from '../utils-date'
-import { STAGE_LABELS, DECISION_LABELS, PAID_BY_LABELS } from '../constants'
+import { STAGE_LABELS, PAID_BY_LABELS } from '../constants'
 import ImpressionSection from './ImpressionSection'
 import MilestoneSection from './MilestoneSection'
 import QuestionsSection from './QuestionsSection'
 import PlanSection from './PlanSection'
 import DecisionSection from './DecisionSection'
 import ReminderSection from './ReminderSection'
+import PhotoViewer from './PhotoViewer'
+import AnniversarySuggestions from './AnniversarySuggestions'
 
 interface Props {
   person: PersonInfo
+  highlightDateId?: string | null
+  onHighlightDone?: () => void
   onBack: () => void
   onEdit: () => void
   onAddDate: () => void
@@ -22,10 +26,41 @@ interface Props {
   onRefresh: () => void
 }
 
-export default function PersonDetail({ person, onBack, onEdit, onAddDate, onEditDate, onRefresh }: Props) {
+export default function PersonDetail({ person, highlightDateId, onHighlightDone, onBack, onEdit, onAddDate, onEditDate, onRefresh }: Props) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [datesSectionCollapsed, setDatesSectionCollapsed] = useState(false)
+  const [photoViewer, setPhotoViewer] = useState<{ photos: string[]; index: number } | null>(null)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
   const dates = db.dates.getByPerson(person.id)
+
+  useLayoutEffect(() => {
+    if (!highlightDateId) return
+    setDatesSectionCollapsed(false)
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(highlightDateId)
+      return next
+    })
+    setHighlightId(highlightDateId)
+  }, [highlightDateId])
+
+  useLayoutEffect(() => {
+    if (!highlightDateId) return
+    const scrollAndHighlight = () => {
+      const el = document.querySelector(`[data-date-id="${highlightDateId}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollAndHighlight)
+    })
+    const t = setTimeout(() => {
+      setHighlightId(null)
+      onHighlightDone?.()
+    }, 2200)
+    return () => clearTimeout(t)
+  }, [highlightDateId, onHighlightDone])
 
   const toggleCollapse = (id: string) => {
     setCollapsedIds((prev) => {
@@ -144,12 +179,16 @@ export default function PersonDetail({ person, onBack, onEdit, onAddDate, onEdit
           )}
           <div className="timeline">
             {dates.map((d) => {
-              const dayCost = getDateTotalCost(d)
               const costMe = getDateCostByMe(d)
               const costThem = getDateCostByThem(d)
               const isCollapsed = collapsedIds.has(d.id)
+              const isHighlighted = highlightId === d.id
               return (
-              <div key={d.id} className={`timeline-item card ${isCollapsed ? 'collapsed' : ''}`}>
+              <div
+                key={d.id}
+                data-date-id={d.id}
+                className={`timeline-item card ${isCollapsed ? 'collapsed' : ''} ${isHighlighted ? 'timeline-item-highlight' : ''}`}
+              >
                 <div className="timeline-dot" />
                 <div className="timeline-content">
                   <div
@@ -202,12 +241,41 @@ export default function PersonDetail({ person, onBack, onEdit, onAddDate, onEdit
                           ))}
                         </div>
                       )}
+                      {(d.tags ?? []).length > 0 && (
+                        <div className="timeline-tags">
+                          {(d.tags ?? []).map((t) => (
+                            <span key={t} className="tag">{t}</span>
+                          ))}
+                        </div>
+                      )}
                       {d.notes && <p className="timeline-notes">{d.notes}</p>}
                       {d.photos.length > 0 && (
                         <div className="timeline-photos">
-                          {d.photos.slice(0, 3).map((src, i) => (
-                            <img key={i} src={src} alt="" />
+                          {d.photos.slice(0, 5).map((src, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className="timeline-photo-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPhotoViewer({ photos: d.photos, index: i })
+                              }}
+                            >
+                              <img src={src} alt="" />
+                            </button>
                           ))}
+                          {d.photos.length > 5 && (
+                            <button
+                              type="button"
+                              className="timeline-photo-more"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPhotoViewer({ photos: d.photos, index: 5 })
+                              }}
+                            >
+                              +{d.photos.length - 5}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -251,8 +319,19 @@ export default function PersonDetail({ person, onBack, onEdit, onAddDate, onEdit
       {/* 是否继续 */}
       <DecisionSection personId={person.id} decision={decision} onRefresh={onRefresh} />
 
+      {/* 纪念日提醒建议 */}
+      <AnniversarySuggestions personId={person.id} personName={person.name} onRefresh={onRefresh} />
+
       {/* 提醒 */}
       <ReminderSection personId={person.id} reminders={reminders} onRefresh={onRefresh} />
+
+      {photoViewer && (
+        <PhotoViewer
+          photos={photoViewer.photos}
+          initialIndex={photoViewer.index}
+          onClose={() => setPhotoViewer(null)}
+        />
+      )}
     </div>
   )
 }

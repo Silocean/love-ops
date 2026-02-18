@@ -5,16 +5,13 @@ import {
   Users,
   Calendar,
   BarChart3,
-  Star,
-  CheckSquare,
-  CalendarClock,
   Search,
   Download,
-  ChevronRight,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import type { PersonInfo } from './types'
 import { db } from './storage'
-import { STAGE_LABELS } from './constants'
 import PersonList from './components/PersonList'
 import PersonDetail from './components/PersonDetail'
 import PersonForm from './components/PersonForm'
@@ -24,14 +21,21 @@ import StatsView from './components/StatsView'
 import SearchView from './components/SearchView'
 import ExportView from './components/ExportView'
 import ReminderCheck from './components/ReminderCheck'
+import PersonPickerModal from './components/PersonPickerModal'
+import OnboardingGuide from './components/OnboardingGuide'
+import { useTheme } from './context/ThemeContext'
 
 type Page = 'list' | 'detail' | 'person-form' | 'date-form' | 'calendar' | 'stats' | 'search' | 'export'
 
 function App() {
+  const { theme, setTheme } = useTheme()
   const [page, setPage] = useState<Page>('list')
   const [persons, setPersons] = useState<PersonInfo[]>([])
   const [selectedPerson, setSelectedPerson] = useState<PersonInfo | null>(null)
   const [editingDateId, setEditingDateId] = useState<string | null>(null)
+  const [presetDate, setPresetDate] = useState<string | null>(null)
+  const [quickAddDate, setQuickAddDate] = useState<string | null>(null)
+  const [scrollToDateId, setScrollToDateId] = useState<string | null>(null)
 
   const refresh = () => setPersons(db.persons.getAll())
 
@@ -49,6 +53,7 @@ function App() {
 
   return (
     <div className="app">
+      <OnboardingGuide personsCount={persons.length} onClose={() => {}} />
       <ReminderCheck persons={persons} />
       <header className="header">
         <div className="header-inner">
@@ -56,7 +61,16 @@ function App() {
             <Heart size={24} />
             对象分析系统
           </h1>
-          <nav className="main-nav">
+          <div className="header-actions-row">
+            <button
+              className="btn btn-ghost icon-btn theme-toggle"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={theme === 'dark' ? '切换亮色' : '切换暗色'}
+              aria-label="切换主题"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <nav className="main-nav">
             {nav.map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
@@ -67,7 +81,8 @@ function App() {
                 {label}
               </button>
             ))}
-          </nav>
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -93,6 +108,8 @@ function App() {
         {page === 'detail' && selectedPerson && (
           <PersonDetail
             person={selectedPerson}
+            highlightDateId={scrollToDateId}
+            onHighlightDone={() => setScrollToDateId(null)}
             onBack={() => setPage('list')}
             onEdit={() => setPage('person-form')}
             onAddDate={() => {
@@ -124,12 +141,17 @@ function App() {
           <DateForm
             person={selectedPerson}
             editDateId={editingDateId}
+            presetDate={presetDate ?? undefined}
             onSave={() => {
               setEditingDateId(null)
+              setPresetDate(null)
+              setQuickAddDate(null)
               setPage('detail')
             }}
             onCancel={() => {
               setEditingDateId(null)
+              setPresetDate(null)
+              setQuickAddDate(null)
               setPage('detail')
             }}
           />
@@ -140,7 +162,16 @@ function App() {
             persons={persons}
             onSelectPerson={(p) => {
               setSelectedPerson(p)
+              setScrollToDateId(null)
               setPage('detail')
+            }}
+            onSelectDateRecord={(p, dateId) => {
+              setSelectedPerson(p)
+              setScrollToDateId(dateId)
+              setPage('detail')
+            }}
+            onQuickAddDate={(dateStr) => {
+              setQuickAddDate(dateStr)
             }}
           />
         )}
@@ -158,9 +189,24 @@ function App() {
         )}
 
         {page === 'export' && (
-          <ExportView persons={persons} />
+          <ExportView persons={persons} onRefresh={refresh} />
         )}
       </main>
+
+      {quickAddDate && persons.length > 0 && (
+        <PersonPickerModal
+          persons={persons}
+          dateStr={quickAddDate}
+          onSelect={(p) => {
+            setSelectedPerson(p)
+            setPresetDate(quickAddDate)
+            setEditingDateId(null)
+            setQuickAddDate(null)
+            setPage('date-form')
+          }}
+          onClose={() => setQuickAddDate(null)}
+        />
+      )}
     </div>
   )
 }
