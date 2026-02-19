@@ -26,4 +26,4 @@ npm run dev
 - Vite 5
 - date-fns
 - lucide-react
-- localStorage 本地存储（无需后端）
+- localStorage 本地存储（无需后端，可选 Supabase 云同步）
