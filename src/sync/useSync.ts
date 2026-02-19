@@ -35,28 +35,12 @@ export function useSync(onDataPulled?: () => void) {
     }, SYNC_DEBOUNCE_MS)
   }, [user, isConfigured])
 
-  const syncNow = useCallback(async () => {
-    if (!user || !isConfigured) return
-    setSyncing(true)
-    setError(null)
-    const data = exportBackup()
-    const { error: pushErr } = await push(data)
-    if (pushErr) {
-      setError(pushErr.message)
-    } else {
-      const ts = new Date().toISOString()
-      localStorage.setItem(LAST_SYNC_KEY, ts)
-      setLastSyncedAt(ts)
-    }
-    setSyncing(false)
-  }, [user, isConfigured])
-
-  const pullNow = useCallback(async (): Promise<boolean> => {
+  const pullNow = useCallback(async (options?: { skipSyncing?: boolean }): Promise<boolean> => {
     if (!user || !isConfigured) return false
-    setSyncing(true)
+    if (!options?.skipSyncing) setSyncing(true)
     setError(null)
     const { data, error: pullErr } = await pull()
-    setSyncing(false)
+    if (!options?.skipSyncing) setSyncing(false)
     if (pullErr) {
       setError(pullErr.message)
       return false
@@ -73,6 +57,23 @@ export function useSync(onDataPulled?: () => void) {
     }
     return false
   }, [user, isConfigured, onDataPulled])
+
+  const syncNow = useCallback(async () => {
+    if (!user || !isConfigured) return
+    setSyncing(true)
+    setError(null)
+    await pullNow({ skipSyncing: true })
+    const data = exportBackup()
+    const { error: pushErr } = await push(data)
+    if (pushErr) {
+      setError(pushErr.message)
+    } else {
+      const ts = new Date().toISOString()
+      localStorage.setItem(LAST_SYNC_KEY, ts)
+      setLastSyncedAt(ts)
+    }
+    setSyncing(false)
+  }, [user, isConfigured, pullNow])
 
   useEffect(() => {
     if (user && isConfigured) {
