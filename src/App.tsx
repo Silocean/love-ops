@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import {
   Heart,
@@ -39,7 +39,7 @@ type Page = 'list' | 'detail' | 'calendar' | 'stats' | 'search' | 'export' | 'pe
 function App() {
   const { theme, setTheme } = useTheme()
   const { user, loading: authLoading, signOut, isConfigured } = useAuth()
-  const refresh = () => setPersons(db.persons.getAll())
+  const refresh = useCallback(() => setPersons(db.persons.getAll()), [])
   const sync = useSync(refresh)
   const initialPullDone = useRef(false)
 
@@ -71,11 +71,35 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (!user) initialPullDone.current = false
+  }, [user])
+
+  useEffect(() => {
     if (!authLoading && user && sync.isConfigured && !initialPullDone.current) {
       initialPullDone.current = true
-      sync.pullNow()
+      const doPull = (retry = false) => {
+        sync.pullNow().then((ok) => {
+          if (!ok && !retry) {
+            setTimeout(() => sync.pullNow(), 800)
+          }
+        })
+      }
+      doPull()
     }
   }, [authLoading, user, sync.isConfigured, sync.pullNow])
+
+  useEffect(() => {
+    if (!user || !sync.isConfigured) return
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        sync.pullNow({ skipSyncing: true }).then((ok) => {
+          if (ok) refresh()
+        })
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [user, sync.isConfigured, sync.pullNow, refresh])
 
   useEffect(() => {
     if (page === 'date-form') {
@@ -94,6 +118,14 @@ function App() {
     <div className="app">
       <OnboardingGuide personsCount={persons.length} onClose={() => {}} />
       <ReminderCheck persons={persons} />
+      {user && sync.error && (
+        <div className="sync-error-banner">
+          同步失败：{sync.error}
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => sync.syncNow()}>
+            重试
+          </button>
+        </div>
+      )}
       <header className="header">
         <div className="header-inner">
           <h1 className="logo">
