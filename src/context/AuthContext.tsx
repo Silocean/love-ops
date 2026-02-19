@@ -40,7 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     if (!supabase) return { error: new Error('云同步未配置') }
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    })
     return { error: error ?? null }
   }
 
