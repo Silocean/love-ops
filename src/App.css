@@ -89,6 +89,50 @@
   background: var(--accent-bg);
 }
 
+.header-more-wrapper {
+  position: relative;
+}
+
+.header-more-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.header-more-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 120px;
+  padding: 0.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 20;
+}
+
+.header-more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.header-more-item:hover {
+  background: var(--bg);
+}
+
 .main {
   flex: 1;
   max-width: 960px;

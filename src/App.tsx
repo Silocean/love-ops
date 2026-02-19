@@ -11,8 +11,9 @@ import {
   Sun,
   Cloud,
   CloudOff,
-  LogOut,
+  ChevronDown,
 } from 'lucide-react'
+import ConfirmModal from './components/ConfirmModal'
 import type { PersonInfo } from './types'
 import { db } from './storage'
 import PersonList from './components/PersonList'
@@ -50,6 +51,20 @@ function App() {
   const [quickAddDate, setQuickAddDate] = useState<string | null>(null)
   const [scrollToDateId, setScrollToDateId] = useState<string | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!moreMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [moreMenuOpen])
 
   useEffect(() => {
     refresh()
@@ -73,7 +88,6 @@ function App() {
     { id: 'calendar' as const, icon: Calendar, label: '日历' },
     { id: 'stats' as const, icon: BarChart3, label: '统计' },
     { id: 'search' as const, icon: Search, label: '搜索' },
-    { id: 'export' as const, icon: Download, label: '导出' },
   ]
 
   return (
@@ -110,15 +124,6 @@ function App() {
                         {format(new Date(sync.lastSyncedAt), 'M月d日 HH:mm', { locale: zhCN })}
                       </span>
                     )}
-                    <button
-                      type="button"
-                      className="btn btn-ghost icon-btn"
-                      onClick={() => signOut()}
-                      title="登出"
-                      aria-label="登出"
-                    >
-                      <LogOut size={18} />
-                    </button>
                   </div>
                 ) : (
                   <button
@@ -152,6 +157,45 @@ function App() {
               </button>
             ))}
             </nav>
+            <div className="header-more-wrapper" ref={moreMenuRef}>
+              <button
+                type="button"
+                className={`header-more-trigger nav-btn ${moreMenuOpen ? 'active' : ''}`}
+                onClick={() => setMoreMenuOpen((v) => !v)}
+                aria-expanded={moreMenuOpen}
+                aria-haspopup="true"
+              >
+                <ChevronDown size={18} />
+                更多
+              </button>
+              {moreMenuOpen && (
+                <div className="header-more-dropdown">
+                  <button
+                    type="button"
+                    className="header-more-item"
+                    onClick={() => {
+                      setPage('export')
+                      setMoreMenuOpen(false)
+                    }}
+                  >
+                    <Download size={16} />
+                    导出
+                  </button>
+                  {isConfigured && user && (
+                    <button
+                      type="button"
+                      className="header-more-item"
+                      onClick={() => {
+                        setConfirmLogout(true)
+                        setMoreMenuOpen(false)
+                      }}
+                    >
+                      退出登录
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -279,6 +323,19 @@ function App() {
       </main>
 
       {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
+      {confirmLogout && (
+        <ConfirmModal
+          title="退出登录"
+          message="确定要退出登录吗？"
+          confirmText="退出"
+          danger
+          onConfirm={() => {
+            signOut()
+            setConfirmLogout(false)
+          }}
+          onCancel={() => setConfirmLogout(false)}
+        />
+      )}
 
       {quickAddDate && persons.length > 0 && (
         <PersonPickerModal
