@@ -28,6 +28,26 @@
   gap: 0.5rem;
 }
 
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sync-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sync-spin {
+  animation: syncSpin 1s linear infinite;
+}
+
+@keyframes syncSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -1917,6 +1937,35 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.auth-modal .auth-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-modal .auth-modal-body .btn {
+  align-self: flex-start;
+}
+
+.auth-modal .auth-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.auth-modal .auth-modal-message {
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
+.auth-modal .auth-modal-message-success {
+  color: var(--accent);
+}
+
+.auth-modal .auth-modal-message-error {
+  color: #c45c3e;
 }
 
 .confirm-modal .confirm-modal-message {

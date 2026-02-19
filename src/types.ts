@@ -18,7 +18,7 @@ export interface PersonInfo {
   age?: number         // 兼容旧数据
   job?: string
   education?: string
-  photos: string[]  // base64
+  photos: string[]  // URL 或 base64
   hobbies?: string
   familyBg?: string
   contact?: string
@@ -59,7 +59,7 @@ export interface DateRecord {
   items: DateRecordItem[]  // 行程明细
   miscExpenses: DateMiscExpense[]  // 零散消费
   notes: string
-  photos: string[]
+  photos: string[]  // URL 或 base64
   tags?: string[]       // 约会标签，如：吃饭、看电影、旅行
   initiatedBy?: InitiatedBy  // 谁主动发起
   createdAt: string

@@ -118,8 +118,16 @@ function loadDates(): DateRecord[] {
   return migrated
 }
 
+type AfterSaveHook = () => void
+let afterSaveHook: AfterSaveHook | null = null
+
+export function setAfterSaveHook(hook: AfterSaveHook | null): void {
+  afterSaveHook = hook
+}
+
 function save<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value))
+  afterSaveHook?.()
 }
 
 export const db = {

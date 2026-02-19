@@ -5,6 +5,8 @@ import { getAgeFromBirthDate } from '../utils-date'
 import { db } from '../storage'
 import { MEET_CHANNEL_LABELS, STAGE_LABELS } from '../constants'
 import type { RelationshipStage } from '../types'
+import { useAuth } from '../context/AuthContext'
+import { uploadPhoto } from '../sync/photo-storage'
 
 interface Props {
   person: PersonInfo | null
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export default function PersonForm({ person, onSave, onCancel }: Props) {
+  const { user, isConfigured } = useAuth()
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [job, setJob] = useState('')
@@ -26,6 +29,7 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
   const [meetChannel, setMeetChannel] = useState<MeetChannel>('friend')
   const [meetChannelNote, setMeetChannelNote] = useState('')
   const [stage, setStage] = useState<RelationshipStage>('initial')
+  const [photoUploading, setPhotoUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const estimatedBirthDateFromAge = (age: number): string => {
@@ -51,15 +55,33 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
     }
   }, [person])
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files?.length) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const data = reader.result as string
-      setPhotos((prev) => [...prev, data])
+    const file = files[0]
+    e.target.value = ''
+    if (user && isConfigured) {
+      setPhotoUploading(true)
+      try {
+        const { url, error } = await uploadPhoto(file, user.id)
+        if (error) {
+          alert(`上传失败：${error.message}`)
+        } else if (url) {
+          setPhotos((prev) => [...prev, url])
+        }
+      } catch (err) {
+        alert(`上传失败：${err instanceof Error ? err.message : '网络或未知错误'}`)
+      } finally {
+        setPhotoUploading(false)
+      }
+    } else {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const data = reader.result as string
+        setPhotos((prev) => [...prev, data])
+      }
+      reader.readAsDataURL(file)
     }
-    reader.readAsDataURL(files[0])
   }
 
   const removePhoto = (i: number) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))
@@ -163,8 +185,13 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
               onChange={handlePhoto}
               style={{ display: 'none' }}
             />
-            <button type="button" className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
-              添加照片
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => fileRef.current?.click()}
+              disabled={photoUploading}
+            >
+              {photoUploading ? '上传中...' : '添加照片'}
             </button>
             <div className="photo-grid">
               {photos.map((src, i) => (

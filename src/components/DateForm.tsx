@@ -4,6 +4,8 @@ import type { PersonInfo, DateRecordItem, DateMiscExpense, PaidBy, InitiatedBy }
 import { PAID_BY_LABELS, INITIATED_BY_LABELS } from '../constants'
 import { db } from '../storage'
 import { id, now, today } from '../utils'
+import { useAuth } from '../context/AuthContext'
+import { uploadPhoto } from '../sync/photo-storage'
 
 interface Props {
   person: PersonInfo
@@ -27,6 +29,7 @@ const emptyMisc = (): DateMiscExpense => ({
 })
 
 export default function DateForm({ person, editDateId, presetDate, onSave, onCancel }: Props) {
+  const { user, isConfigured } = useAuth()
   const existing = editDateId ? db.dates.getAll().find((d) => d.id === editDateId) : null
 
   const [date, setDate] = useState(existing?.date ?? presetDate ?? today())
@@ -40,6 +43,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? [])
   const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const [initiatedBy, setInitiatedBy] = useState<InitiatedBy | ''>(existing?.initiatedBy ?? '')
+  const [photoUploading, setPhotoUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const updateItem = (idx: number, updater: (it: DateRecordItem) => DateRecordItem) => {
@@ -59,12 +63,30 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
   const addMisc = () => setMiscExpenses((prev) => [...prev, emptyMisc()])
   const removeMisc = (idx: number) => setMiscExpenses((prev) => prev.filter((_, i) => i !== idx))
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files?.length) return
-    const reader = new FileReader()
-    reader.onload = () => setPhotos((prev) => [...prev, reader.result as string])
-    reader.readAsDataURL(files[0])
+    const file = files[0]
+    e.target.value = ''
+    if (user && isConfigured) {
+      setPhotoUploading(true)
+      try {
+        const { url, error } = await uploadPhoto(file, user.id)
+        if (error) {
+          alert(`上传失败：${error.message}`)
+        } else if (url) {
+          setPhotos((prev) => [...prev, url])
+        }
+      } catch (err) {
+        alert(`上传失败：${err instanceof Error ? err.message : '网络或未知错误'}`)
+      } finally {
+        setPhotoUploading(false)
+      }
+    } else {
+      const reader = new FileReader()
+      reader.onload = () => setPhotos((prev) => [...prev, reader.result as string])
+      reader.readAsDataURL(file)
+    }
   }
 
   const removePhoto = (i: number) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))
@@ -309,8 +331,13 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
             onChange={handlePhoto}
             style={{ display: 'none' }}
           />
-          <button type="button" className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
-            添加照片
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => fileRef.current?.click()}
+            disabled={photoUploading}
+          >
+            {photoUploading ? '上传中...' : '添加照片'}
           </button>
           <div className="photo-grid">
             {photos.map((src, i) => (

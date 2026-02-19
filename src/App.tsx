@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import {
   Heart,
@@ -9,6 +9,9 @@ import {
   Download,
   Moon,
   Sun,
+  Cloud,
+  CloudOff,
+  LogOut,
 } from 'lucide-react'
 import type { PersonInfo } from './types'
 import { db } from './storage'
@@ -23,12 +26,22 @@ import ExportView from './components/ExportView'
 import ReminderCheck from './components/ReminderCheck'
 import PersonPickerModal from './components/PersonPickerModal'
 import OnboardingGuide from './components/OnboardingGuide'
+import AuthModal from './components/AuthModal'
 import { useTheme } from './context/ThemeContext'
+import { useAuth } from './context/AuthContext'
+import { useSync } from './sync/useSync'
+import { format } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 
 type Page = 'list' | 'detail' | 'calendar' | 'stats' | 'search' | 'export' | 'person-form' | 'date-form'
 
 function App() {
   const { theme, setTheme } = useTheme()
+  const { user, loading: authLoading, signOut, isConfigured } = useAuth()
+  const refresh = () => setPersons(db.persons.getAll())
+  const sync = useSync(refresh)
+  const initialPullDone = useRef(false)
+
   const [page, setPage] = useState<Page>('list')
   const [persons, setPersons] = useState<PersonInfo[]>([])
   const [selectedPerson, setSelectedPerson] = useState<PersonInfo | null>(null)
@@ -36,12 +49,18 @@ function App() {
   const [presetDate, setPresetDate] = useState<string | null>(null)
   const [quickAddDate, setQuickAddDate] = useState<string | null>(null)
   const [scrollToDateId, setScrollToDateId] = useState<string | null>(null)
-
-  const refresh = () => setPersons(db.persons.getAll())
+  const [authModalOpen, setAuthModalOpen] = useState(false)
 
   useEffect(() => {
     refresh()
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && user && sync.isConfigured && !initialPullDone.current) {
+      initialPullDone.current = true
+      sync.pullNow()
+    }
+  }, [authLoading, user, sync.isConfigured, sync.pullNow])
 
   useEffect(() => {
     if (page === 'date-form') {
@@ -68,6 +87,51 @@ function App() {
             对象分析系统
           </h1>
           <div className="header-actions-row">
+            {isConfigured && (
+              <>
+                {user ? (
+                  <div className="sync-status">
+                    <button
+                      type="button"
+                      className="btn btn-ghost icon-btn"
+                      onClick={() => sync.syncNow()}
+                      disabled={sync.syncing}
+                      title="立即同步"
+                      aria-label="同步"
+                    >
+                      {sync.syncing ? (
+                        <Cloud size={20} className="sync-spin" />
+                      ) : (
+                        <Cloud size={20} />
+                      )}
+                    </button>
+                    {sync.lastSyncedAt && (
+                      <span className="sync-time">
+                        {format(new Date(sync.lastSyncedAt), 'M月d日 HH:mm', { locale: zhCN })}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost icon-btn"
+                      onClick={() => signOut()}
+                      title="登出"
+                      aria-label="登出"
+                    >
+                      <LogOut size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setAuthModalOpen(true)}
+                  >
+                    <CloudOff size={18} />
+                    登录
+                  </button>
+                )}
+              </>
+            )}
             <button
               className="btn btn-ghost icon-btn theme-toggle"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -213,6 +277,8 @@ function App() {
           />
         )}
       </main>
+
+      {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
 
       {quickAddDate && persons.length > 0 && (
         <PersonPickerModal
