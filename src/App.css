@@ -29,9 +29,11 @@
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   padding: 0.75rem 1.5rem;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .header-inner {
@@ -187,6 +189,11 @@
 
 .bottom-tab-item.active {
   color: var(--accent);
+}
+
+/* 桌面端底部无 tab，占位为 0 */
+.bottom-tab-spacer {
+  display: none;
 }
 
 /* Settings page */
@@ -2360,17 +2367,15 @@
     display: none;
   }
 
-  /* 顶部菜单固定，不随内容滚动 */
-  .header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+  .main {
+    padding-bottom: 0; /* 由 bottom-tab-spacer 提供底部空间 */
   }
 
-  .main {
-    padding-top: 56px; /* 为固定 header 留出空间 */
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 10px + 2rem); /* 为底 tab 留足空间，避免最后内容被遮挡 */
+  .bottom-tab-spacer {
+    display: block;
+    flex-shrink: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 0px) + 10px);
+    min-height: calc(56px + env(safe-area-inset-bottom, 0px) + 10px);
   }
 
   .bottom-tab-bar {

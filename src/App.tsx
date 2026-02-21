@@ -390,6 +390,7 @@ function App() {
             }}
           />
         )}
+        <div className="bottom-tab-spacer" aria-hidden />
       </main>
 
       {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
