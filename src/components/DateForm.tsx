@@ -139,7 +139,9 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
           <div className="form-row two-cols">
             <div>
               <label>日期 *</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <div className="date-time-input-wrap">
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              </div>
             </div>
             <div>
               <label>谁主动发起</label>
@@ -183,11 +185,13 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
                 <div className="form-row two-cols">
                   <div>
                     <label>时间</label>
-                    <input
-                      type="time"
-                      value={it.time ?? ''}
-                      onChange={(e) => updateItem(idx, (x) => ({ ...x, time: e.target.value || undefined }))}
-                    />
+                    <div className="date-time-input-wrap">
+                      <input
+                        type="time"
+                        value={it.time ?? ''}
+                        onChange={(e) => updateItem(idx, (x) => ({ ...x, time: e.target.value || undefined }))}
+                      />
+                    </div>
                   </div>
                   <div>
                     <label>地点</label>

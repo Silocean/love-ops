@@ -154,7 +154,9 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
           <div className="form-row two-cols">
             <div>
               <label>出生日期</label>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+              <div className="date-time-input-wrap">
+                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+              </div>
               {birthDate && (
                 <span className="form-hint-inline">
                   {getAgeFromBirthDate(birthDate) ?? '-'} 岁

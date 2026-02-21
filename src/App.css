@@ -278,6 +278,7 @@
   margin: 0 auto;
   padding: 1.5rem;
   width: 100%;
+  overflow-x: hidden; /* 禁止左右滑动和底部横向滚动条 */
 }
 
 .page {
@@ -884,6 +885,10 @@
 }
 
 /* Forms */
+.form-page {
+  overflow-x: hidden; /* 表单页禁止左右滑动 */
+}
+
 .form-page .page-header {
   margin-bottom: 1rem;
 }
@@ -955,7 +960,6 @@
   border-radius: var(--radius);
   padding: 1rem;
   margin-bottom: 0.75rem;
-  overflow: hidden; /* 裁剪行程内 time 输入框溢出，用 overflow 使四角一致 */
 }
 
 .date-form-block .date-item-card:last-child {
@@ -1080,8 +1084,13 @@
 
 .form-row.two-cols > div {
   min-width: 0;
-  overflow: hidden; /* 裁剪 date/time 输入框溢出，配合 border-radius 使裁剪边界呈圆角 */
-  border-radius: 8px; /* 与 input 一致 */
+}
+
+/* 仅包裹 date/time input，裁剪溢出且四角圆角一致 */
+.date-time-input-wrap {
+  overflow: hidden;
+  border-radius: 8px;
+  min-width: 0;
 }
 
 .form-row input[type="date"],
