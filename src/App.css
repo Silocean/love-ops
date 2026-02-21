@@ -2367,7 +2367,16 @@
     display: none;
   }
 
+  /* sticky 在 iOS 下受 body overflow-x: hidden 影响失效，改用 fixed */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
   .main {
+    padding-top: 72px; /* 为固定 header 留出空间（含可能的换行） */
     padding-bottom: 0; /* 由 bottom-tab-spacer 提供底部空间 */
   }
 
