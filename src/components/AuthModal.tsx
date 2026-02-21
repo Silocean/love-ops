@@ -19,12 +19,17 @@ export default function AuthModal({ onClose }: Props) {
     if (!email.trim()) return
     setLoading(true)
     setMessage(null)
-    const { error } = await signInWithMagicLink(email.trim())
-    setLoading(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
-    } else {
-      setMessage({ type: 'success', text: '已发送登录链接，请查收邮箱' })
+    try {
+      const { error } = await signInWithMagicLink(email.trim())
+      if (error) {
+        setMessage({ type: 'error', text: error.message })
+      } else {
+        setMessage({ type: 'success', text: '已发送登录链接，请查收邮箱' })
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : '请求失败，请检查网络' })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -32,17 +37,22 @@ export default function AuthModal({ onClose }: Props) {
     if (!email.trim() || !password) return
     setLoading(true)
     setMessage(null)
-    const fn = isSignUp ? signUp : signInWithPassword
-    const { error } = await fn(email.trim(), password)
-    setLoading(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
-    } else {
-      if (isSignUp) {
-        setMessage({ type: 'success', text: '注册成功，请查收邮箱验证' })
+    try {
+      const fn = isSignUp ? signUp : signInWithPassword
+      const { error } = await fn(email.trim(), password)
+      if (error) {
+        setMessage({ type: 'error', text: error.message })
       } else {
-        onClose()
+        if (isSignUp) {
+          setMessage({ type: 'success', text: '注册成功，请查收邮箱验证' })
+        } else {
+          onClose()
+        }
       }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : '请求失败，请检查网络' })
+    } finally {
+      setLoading(false)
     }
   }
 
