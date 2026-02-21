@@ -1081,12 +1081,21 @@
   min-width: 0;
 }
 
-.form-row input[type="date"] {
+.form-row input[type="date"],
+.form-row input[type="time"] {
   display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 修复移动端 date/time 输入框溢出（Safari/Chrome 内部 shadow DOM 有 min-width） */
+.form-row input[type="date"]::-webkit-datetime-edit,
+.form-row input[type="time"]::-webkit-datetime-edit {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .form-actions {
