@@ -2376,7 +2376,7 @@
   }
 
   .main {
-    padding-top: 72px; /* 为固定 header 留出空间（含可能的换行） */
+    padding-top: 96px; /* 为固定 header 留出空间（header 换行时约 88px+） */
     padding-bottom: 0; /* 由 bottom-tab-spacer 提供底部空间 */
   }
 
