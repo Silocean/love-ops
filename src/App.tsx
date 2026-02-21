@@ -5,13 +5,13 @@ import {
   Users,
   Calendar,
   BarChart3,
-  Search,
   Download,
   Moon,
   Sun,
   Cloud,
   CloudOff,
   ChevronDown,
+  Settings,
 } from 'lucide-react'
 import ConfirmModal from './components/ConfirmModal'
 import type { PersonInfo } from './types'
@@ -22,19 +22,20 @@ import PersonForm from './components/PersonForm'
 import DateForm from './components/DateForm'
 import CalendarView from './components/CalendarView'
 import StatsView from './components/StatsView'
-import SearchView from './components/SearchView'
 import ExportView from './components/ExportView'
 import ReminderCheck from './components/ReminderCheck'
 import PersonPickerModal from './components/PersonPickerModal'
 import OnboardingGuide from './components/OnboardingGuide'
 import AuthModal from './components/AuthModal'
+import SettingsView from './components/SettingsView'
+import BottomTabBar, { type TabId } from './components/BottomTabBar'
 import { useTheme } from './context/ThemeContext'
 import { useAuth } from './context/AuthContext'
 import { useSync } from './sync/useSync'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
-type Page = 'list' | 'detail' | 'calendar' | 'stats' | 'search' | 'export' | 'person-form' | 'date-form'
+type Page = 'list' | 'detail' | 'calendar' | 'stats' | 'export' | 'person-form' | 'date-form' | 'settings'
 
 function App() {
   const { theme, setTheme } = useTheme()
@@ -53,7 +54,19 @@ function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine)
   const moreMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true)
+    const onOffline = () => setIsOnline(false)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [])
 
   useEffect(() => {
     if (!moreMenuOpen) return
@@ -111,13 +124,32 @@ function App() {
     { id: 'list' as const, icon: Users, label: '人选' },
     { id: 'calendar' as const, icon: Calendar, label: '日历' },
     { id: 'stats' as const, icon: BarChart3, label: '统计' },
-    { id: 'search' as const, icon: Search, label: '搜索' },
   ]
+
+  const mobileTabNav: { id: TabId; icon: typeof Users; label: string }[] = [
+    { id: 'list', icon: Users, label: '人选' },
+    { id: 'stats', icon: BarChart3, label: '统计' },
+    { id: 'calendar', icon: Calendar, label: '日历' },
+    { id: 'settings', icon: Settings, label: '设置' },
+  ]
+
+  const getActiveTabId = (): TabId => {
+    if (['list', 'detail', 'person-form', 'date-form'].includes(page)) return 'list'
+    if (page === 'stats') return 'stats'
+    if (page === 'calendar') return 'calendar'
+    if (['settings', 'export'].includes(page)) return 'settings'
+    return 'list'
+  }
 
   return (
     <div className="app">
       <OnboardingGuide personsCount={persons.length} onClose={() => {}} />
       <ReminderCheck persons={persons} />
+      {!isOnline && (
+        <div className="offline-banner">
+          离线模式 · 数据已保存到本地
+        </div>
+      )}
       {user && sync.error && (
         <div className="sync-error-banner">
           同步失败：{sync.error}
@@ -177,19 +209,20 @@ function App() {
             >
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <nav className="main-nav">
-            {nav.map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                className={`nav-btn ${page === id ? 'active' : ''}`}
-                onClick={() => setPage(id)}
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ))}
-            </nav>
-            <div className="header-more-wrapper" ref={moreMenuRef}>
+            <div className="header-nav-web">
+              <nav className="main-nav">
+                {nav.map(({ id, icon: Icon, label }) => (
+                  <button
+                    key={id}
+                    className={`nav-btn ${page === id ? 'active' : ''}`}
+                    onClick={() => setPage(id)}
+                  >
+                    <Icon size={18} />
+                    {label}
+                  </button>
+                ))}
+              </nav>
+              <div className="header-more-wrapper" ref={moreMenuRef}>
               <button
                 type="button"
                 className={`header-more-trigger nav-btn ${moreMenuOpen ? 'active' : ''}`}
@@ -227,6 +260,7 @@ function App() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>
@@ -299,13 +333,17 @@ function App() {
 
         {page === 'stats' && <StatsView persons={persons} />}
 
-        {page === 'search' && (
-          <SearchView
-            persons={persons}
-            onSelectPerson={(p) => {
-              setSelectedPerson(p)
-              setPage('detail')
+        {page === 'settings' && (
+          <SettingsView
+            sync={{
+              syncing: sync.syncing,
+              lastSyncedAt: sync.lastSyncedAt,
+              error: sync.error,
+              syncNow: sync.syncNow,
             }}
+            onNavigateToExport={() => setPage('export')}
+            onLoginClick={() => setAuthModalOpen(true)}
+            onLogoutClick={() => setConfirmLogout(true)}
           />
         )}
 
@@ -368,6 +406,17 @@ function App() {
           onCancel={() => setConfirmLogout(false)}
         />
       )}
+
+      <BottomTabBar
+        tabs={mobileTabNav}
+        activeId={getActiveTabId()}
+        onChange={(id) => {
+          if (id === 'settings') setPage('settings')
+          else if (id === 'list') setPage('list')
+          else if (id === 'stats') setPage('stats')
+          else if (id === 'calendar') setPage('calendar')
+        }}
+      />
 
       {quickAddDate && persons.length > 0 && (
         <PersonPickerModal

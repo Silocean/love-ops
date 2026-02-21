@@ -1,4 +1,5 @@
-import { useState, useLayoutEffect } from 'react'
+import { useState, useLayoutEffect, useEffect } from 'react'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 import { ArrowLeft, Plus, Calendar, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -27,8 +28,17 @@ interface Props {
   onRefresh: () => void
 }
 
+const MOBILE_BREAKPOINT = 640
+
 export default function PersonDetail({ person, highlightDateId, onHighlightDone, onBack, onEdit, onDelete, onAddDate, onEditDate, onRefresh }: Props) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [datesSectionCollapsed, setDatesSectionCollapsed] = useState(false)
   const [photoViewer, setPhotoViewer] = useState<{ photos: string[]; index: number } | null>(null)
   const [avatarViewerOpen, setAvatarViewerOpen] = useState(false)
@@ -80,6 +90,8 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
   const plan = db.plans.getByPerson(person.id)
   const decision = db.decisions.getByPerson(person.id)
   const reminders = db.reminders.getByPerson(person.id)
+
+  useSwipeBack(onBack)
 
   const totalCost = dates.reduce((s, d) => s + getDateTotalCost(d), 0)
   const costByMe = dates.reduce((s, d) => s + getDateCostByMe(d), 0)
@@ -218,16 +230,18 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && toggleCollapse(d.id)}
                   >
-                    <div className="timeline-header-main">
-                      <span className="timeline-date">{format(new Date(d.date), 'M月d日 yyyy', { locale: zhCN })}</span>
-                      <h4>{getDateSummary(d)}</h4>
-                      {d.initiatedBy && (
-                        <span className={`initiated-badge initiated-${d.initiatedBy}`}>
-                          {INITIATED_BY_LABELS[d.initiatedBy]}
-                        </span>
-                      )}
-                      {costMe > 0 && <span className="cost cost-me">我 ¥{formatCost(costMe)}</span>}
-                      {costThem > 0 && <span className="cost cost-them">对方 ¥{formatCost(costThem)}</span>}
+                    <div className={`timeline-header-main ${isMobile ? 'timeline-header-mobile' : ''}`}>
+                      <span className="timeline-date">{format(new Date(d.date), isMobile ? 'M/d' : 'M月d日 yyyy', { locale: zhCN })}</span>
+                      <h4 className={isMobile ? 'timeline-summary-mobile' : ''}>{getDateSummary(d)}</h4>
+                      <span className="timeline-header-meta">
+                        {d.initiatedBy && (
+                          <span className={`initiated-badge initiated-${d.initiatedBy}`}>
+                            {INITIATED_BY_LABELS[d.initiatedBy]}
+                          </span>
+                        )}
+                        {costMe > 0 && <span className="cost cost-me">我 ¥{formatCost(costMe)}</span>}
+                        {costThem > 0 && <span className="cost cost-them">对方 ¥{formatCost(costThem)}</span>}
+                      </span>
                     </div>
                     {isCollapsed ? (
                       <ChevronDown size={20} className="timeline-chevron" />
@@ -240,7 +254,7 @@ export default function PersonDetail({ person, highlightDateId, onHighlightDone,
                       className="timeline-body"
                       onClick={() => onEditDate(d.id)}
                     >
-                      <ul className="timeline-items">
+                      <ul className={`timeline-items ${isMobile ? 'timeline-items-mobile' : ''}`}>
                         {d.items.map((it) => (
                           <li key={it.id}>
                             {it.time && <span className="item-time">{it.time}</span>}

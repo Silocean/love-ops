@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { PersonInfo } from '../types'
+import type { DateRecord } from '../types'
 import { db } from '../storage'
 import { getDateTotalCost, getDateCostByMe, getDateCostByThem, getDateSummary, formatCost } from '../utils-date'
 import { STAGE_LABELS, INITIATED_BY_LABELS } from '../constants'
-import { format } from 'date-fns'
+import { format, startOfWeek, startOfMonth } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import SpendingLineChart, { type ChartPoint } from './SpendingLineChart'
 
 interface Props {
   persons: PersonInfo[]
 }
 
 type TimeRange = 'all' | 'week' | 'month' | 'year'
+type ChartType = 'bar' | 'line'
+type ChartAggregation = 'date' | 'week' | 'month'
 
 const getRangeStart = (range: TimeRange): string => {
   const now = new Date()
@@ -35,9 +39,63 @@ const getRangeStart = (range: TimeRange): string => {
   }
 }
 
+const MOBILE_BREAKPOINT = 640
+
+function aggregateDates(
+  dates: DateRecord[],
+  agg: ChartAggregation,
+  getMe: (d: DateRecord) => number,
+  getThem: (d: DateRecord) => number
+): ChartPoint[] {
+  const sorted = [...dates].sort((a, b) => a.date.localeCompare(b.date))
+  if (agg === 'date') {
+    return sorted.map((d) => ({
+      label: format(new Date(d.date), 'M/d', { locale: zhCN }),
+      me: getMe(d),
+      them: getThem(d),
+      date: d.date,
+    }))
+  }
+  const map = new Map<string, { me: number; them: number; date: string }>()
+  for (const d of sorted) {
+    let key: string
+    const dt = new Date(d.date)
+    if (agg === 'week') {
+      const start = startOfWeek(dt, { weekStartsOn: 1 })
+      key = format(start, 'yyyy-MM-dd')
+    } else {
+      const start = startOfMonth(dt)
+      key = format(start, 'yyyy-MM-dd')
+    }
+    const prev = map.get(key) ?? { me: 0, them: 0, date: key }
+    prev.me += getMe(d)
+    prev.them += getThem(d)
+    map.set(key, prev)
+  }
+  const entries = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  return entries.map(([date, { me, them }]) => ({
+    label: agg === 'week'
+      ? format(new Date(date), 'M/d', { locale: zhCN })
+      : format(new Date(date), 'yyyy/M', { locale: zhCN }),
+    me,
+    them,
+    date,
+  }))
+}
+
 export default function StatsView({ persons }: Props) {
   const [filterPersonId, setFilterPersonId] = useState<string>('')
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
+  const [chartType, setChartType] = useState<ChartType>('line')
+  const [chartAggregation, setChartAggregation] = useState<ChartAggregation>('date')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const allDatesRaw = db.dates.getAll()
   const personFiltered =
@@ -69,6 +127,13 @@ export default function StatsView({ persons }: Props) {
   const initiatedUnknown = allDates.length - initiatedByMe - initiatedByThem
 
   const recentDates = [...allDates].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10)
+
+  const chartPoints = useMemo(
+    () => aggregateDates(allDates, chartAggregation, getDateCostByMe, getDateCostByThem),
+    [allDates, chartAggregation]
+  )
+
+  const barChartPoints = isMobile ? chartPoints.slice(-8) : chartPoints.slice(-15)
 
   return (
     <div className="page stats-page">
@@ -172,71 +237,101 @@ export default function StatsView({ persons }: Props) {
 
       {allDates.length > 0 && (
         <section className="stats-section card">
-          <h3>花费趋势</h3>
+          <div className="chart-section-header">
+            <h3>花费趋势</h3>
+            <div className="chart-controls">
+              <div className="chart-type-toggle">
+                <button
+                  type="button"
+                  className={chartType === 'line' ? 'active' : ''}
+                  onClick={() => setChartType('line')}
+                >
+                  折线
+                </button>
+                <button
+                  type="button"
+                  className={chartType === 'bar' ? 'active' : ''}
+                  onClick={() => setChartType('bar')}
+                >
+                  柱状
+                </button>
+              </div>
+              <select
+                className="chart-aggregation-select"
+                value={chartAggregation}
+                onChange={(e) => setChartAggregation(e.target.value as ChartAggregation)}
+              >
+                <option value="date">按次</option>
+                <option value="week">按周</option>
+                <option value="month">按月</option>
+              </select>
+            </div>
+          </div>
           <div className="cost-chart-by-date">
-            {(() => {
-              const sortedDates = [...allDates].sort((a, b) => a.date.localeCompare(b.date))
-              const chartDates = sortedDates.slice(-15)
-              const maxAmount = Math.max(
-                ...chartDates.map((d) => getDateTotalCost(d)),
-                1
-              )
-              const yLabels = [
-                0,
-                Math.ceil(maxAmount / 4),
-                Math.ceil(maxAmount / 2),
-                Math.ceil((maxAmount * 3) / 4),
-                Math.ceil(maxAmount),
-              ]
-              return (
-                <div className="date-chart">
-                  <div className="chart-y-axis">
-                    {yLabels.map((v) => (
-                      <span key={v} className="y-label">
-                        ¥{formatCost(v)}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="chart-area">
+            {chartType === 'line' ? (
+              <SpendingLineChart points={chartPoints} formatCost={formatCost} />
+            ) : (
+              (() => {
+                const pts = barChartPoints
+                const maxAmount = Math.max(
+                  ...pts.map((p) => p.me + p.them),
+                  1
+                )
+                const yLabels = [
+                  0,
+                  Math.ceil(maxAmount / 4),
+                  Math.ceil(maxAmount / 2),
+                  Math.ceil((maxAmount * 3) / 4),
+                  Math.ceil(maxAmount),
+                ]
+                return (
+                  <div className="date-chart">
+                    <div className="chart-y-axis">
+                      {yLabels.map((v) => (
+                        <span key={v} className="y-label">
+                          ¥{formatCost(v)}
+                        </span>
+                      ))}
+                    </div>
                     <div
-                      className="chart-bars"
-                      style={{
-                        gridTemplateColumns: `repeat(${chartDates.length}, 1fr)`,
-                      }}
+                      className="chart-area"
                     >
-                      {chartDates.map((d) => {
-                        const me = getDateCostByMe(d)
-                        const them = getDateCostByThem(d)
-                        const chartHeight = 140
-                        const meHeight =
-                          maxAmount > 0 && me > 0 ? Math.max((me / maxAmount) * chartHeight, 4) : 0
-                        const themHeight =
-                          maxAmount > 0 && them > 0 ? Math.max((them / maxAmount) * chartHeight, 4) : 0
-                        return (
-                          <div key={d.id} className="chart-bar-wrapper">
-                            <div className="chart-bar-pair" style={{ height: chartHeight }}>
-                              <div
-                                className="chart-bar-single cost-me"
-                                style={{ height: `${meHeight}px` }}
-                                title={`我 ¥${formatCost(me)}`}
-                              />
-                              <div
-                                className="chart-bar-single cost-them"
-                                style={{ height: `${themHeight}px` }}
-                                title={`对方 ¥${formatCost(them)}`}
-                              />
+                      <div
+                        className="chart-bars"
+                        style={{
+                          gridTemplateColumns: `repeat(${pts.length}, 1fr)`,
+                        }}
+                      >
+                        {pts.map((p, i) => {
+                          const chartHeight = 140
+                          const meHeight =
+                            maxAmount > 0 && p.me > 0 ? Math.max((p.me / maxAmount) * chartHeight, 4) : 0
+                          const themHeight =
+                            maxAmount > 0 && p.them > 0 ? Math.max((p.them / maxAmount) * chartHeight, 4) : 0
+                          return (
+                            <div key={`${p.date}-${i}`} className="chart-bar-wrapper">
+                              <div className="chart-bar-pair" style={{ height: chartHeight }}>
+                                <div
+                                  className="chart-bar-single cost-me"
+                                  style={{ height: `${meHeight}px` }}
+                                  title={`我 ¥${formatCost(p.me)}`}
+                                />
+                                <div
+                                  className="chart-bar-single cost-them"
+                                  style={{ height: `${themHeight}px` }}
+                                  title={`对方 ¥${formatCost(p.them)}`}
+                                />
+                              </div>
+                              <span className="chart-x-label">{p.label}</span>
                             </div>
-                            <span className="chart-x-label">
-                              {format(new Date(d.date), 'M/d', { locale: zhCN })}
-                            </span>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })()}
+                )
+              })()
+            )}
           </div>
           <div className="chart-legend">
             <span className="legend-item cost-me">■ 我出钱</span>

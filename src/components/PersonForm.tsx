@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import type { PersonInfo, MeetChannel } from '../types'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 import { id, now } from '../utils'
 import { getAgeFromBirthDate } from '../utils-date'
 import { db } from '../storage'
 import { MEET_CHANNEL_LABELS, STAGE_LABELS } from '../constants'
 import type { RelationshipStage } from '../types'
 import { useAuth } from '../context/AuthContext'
-import { uploadPhoto } from '../sync/photo-storage'
+import { uploadPhotoWithOfflineFallback } from '../sync/photo-storage'
 
 interface Props {
   person: PersonInfo | null
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function PersonForm({ person, onSave, onCancel }: Props) {
+  useSwipeBack(onCancel)
   const { user, isConfigured } = useAuth()
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -63,7 +65,7 @@ export default function PersonForm({ person, onSave, onCancel }: Props) {
     if (user && isConfigured) {
       setPhotoUploading(true)
       try {
-        const { url, error } = await uploadPhoto(file, user.id)
+        const { url, error } = await uploadPhotoWithOfflineFallback(file, user.id)
         if (error) {
           alert(`上传失败：${error.message}`)
         } else if (url) {

@@ -26,12 +26,37 @@ export async function uploadPhoto(
   const ext = getExt(file)
   const path = `${userId}/${id()}.${ext}`
 
-  const { error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(path, file, { contentType: file.type })
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(path, file, { contentType: file.type })
 
-  if (error) return { url: '', error }
+    if (error) return { url: '', error }
 
-  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path)
-  return { url: data.publicUrl, error: null }
+    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path)
+    return { url: data.publicUrl, error: null }
+  } catch (err) {
+    return { url: '', error: err instanceof Error ? err : new Error(String(err)) }
+  }
+}
+
+/** 上传照片，失败时回退到 base64 本地存储（离线场景） */
+export async function uploadPhotoWithOfflineFallback(
+  file: File,
+  userId: string
+): Promise<{ url: string; error: Error | null }> {
+  const result = await uploadPhoto(file, userId)
+  if (!result.error) return result
+  const msg = result.error.message.toLowerCase()
+  const isOffline = !navigator.onLine || msg.includes('fetch') || msg.includes('network') || msg.includes('failed') || msg.includes('load')
+  if (isOffline) {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+    return { url: base64, error: null }
+  }
+  return result
 }

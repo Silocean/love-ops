@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import type { PersonInfo, DateRecordItem, DateMiscExpense, PaidBy, InitiatedBy } from '../types'
 import { PAID_BY_LABELS, INITIATED_BY_LABELS } from '../constants'
 import { db } from '../storage'
 import { id, now, today } from '../utils'
 import { useAuth } from '../context/AuthContext'
-import { uploadPhoto } from '../sync/photo-storage'
+import { uploadPhotoWithOfflineFallback } from '../sync/photo-storage'
 
 interface Props {
   person: PersonInfo
@@ -29,6 +30,7 @@ const emptyMisc = (): DateMiscExpense => ({
 })
 
 export default function DateForm({ person, editDateId, presetDate, onSave, onCancel }: Props) {
+  useSwipeBack(onCancel)
   const { user, isConfigured } = useAuth()
   const existing = editDateId ? db.dates.getAll().find((d) => d.id === editDateId) : null
 
@@ -41,7 +43,6 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
   )
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [photos, setPhotos] = useState<string[]>(existing?.photos ?? [])
-  const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const [initiatedBy, setInitiatedBy] = useState<InitiatedBy | ''>(existing?.initiatedBy ?? '')
   const [photoUploading, setPhotoUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -71,7 +72,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
     if (user && isConfigured) {
       setPhotoUploading(true)
       try {
-        const { url, error } = await uploadPhoto(file, user.id)
+        const { url, error } = await uploadPhotoWithOfflineFallback(file, user.id)
         if (error) {
           alert(`上传失败：${error.message}`)
         } else if (url) {
@@ -91,14 +92,6 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
 
   const removePhoto = (i: number) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))
 
-  const [tagInput, setTagInput] = useState('')
-  const addTag = () => {
-    const t = tagInput.trim()
-    if (t && !tags.includes(t)) setTags((prev) => [...prev, t])
-    setTagInput('')
-  }
-  const removeTag = (i: number) => setTags((prev) => prev.filter((_, idx) => idx !== i))
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const validItems = items.filter((it) => it.activity.trim())
@@ -114,7 +107,7 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
       miscExpenses: validMisc,
       notes,
       photos,
-      tags,
+      tags: [] as string[],
       initiatedBy: initiatedBy || undefined,
       updatedAt: ts,
     }
@@ -140,28 +133,33 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
         <h2>{existing ? '编辑约会' : '添加约会'} - {person.name}</h2>
       </div>
       <form className="date-form" onSubmit={handleSubmit}>
-        <div className="form-row two-cols">
-          <div>
-            <label>日期 *</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-          </div>
-          <div>
-            <label>谁主动发起</label>
-            <select
-              value={initiatedBy}
-              onChange={(e) => setInitiatedBy(e.target.value as InitiatedBy | '')}
-            >
-              <option value="">未填写</option>
-              {(Object.entries(INITIATED_BY_LABELS) as [InitiatedBy, string][]).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
+        <div className="date-form-block">
+          <h3 className="date-form-block-title">基本信息</h3>
+          <div className="date-form-block-body">
+          <div className="form-row two-cols">
+            <div>
+              <label>日期 *</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            </div>
+            <div>
+              <label>谁主动发起</label>
+              <select
+                value={initiatedBy}
+                onChange={(e) => setInitiatedBy(e.target.value as InitiatedBy | '')}
+              >
+                <option value="">未填写</option>
+                {(Object.entries(INITIATED_BY_LABELS) as [InitiatedBy, string][]).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
               ))}
             </select>
+            </div>
+          </div>
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="date-form-block form-section">
           <div className="section-header">
-            <h3>行程明细</h3>
+            <h3 className="date-form-block-title">行程明细</h3>
             <button type="button" className="btn btn-primary btn-sm" onClick={addItem}>
               <Plus size={16} /> 添加行程
             </button>
@@ -243,9 +241,9 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
           ))}
         </div>
 
-        <div className="form-section">
+        <div className="date-form-block form-section">
           <div className="section-header">
-            <h3>零散消费</h3>
+            <h3 className="date-form-block-title">零散消费</h3>
             <button type="button" className="btn btn-primary btn-sm" onClick={addMisc}>
               <Plus size={16} /> 添加
             </button>
@@ -296,34 +294,16 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
           )}
         </div>
 
-        <div className="form-row">
-          <label>标签（可选）</label>
-          <div className="inline-form">
-            <input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-              placeholder="如：吃饭、看电影"
-            />
-            <button type="button" className="btn btn-ghost btn-sm" onClick={addTag}>添加</button>
+        <div className="date-form-block">
+          <h3 className="date-form-block-title">整体感想</h3>
+          <div className="date-form-block-body">
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="记录这次约会的感受..." rows={4} />
           </div>
-          {tags.length > 0 && (
-            <div className="tags tag-input-list" style={{ marginTop: '0.5rem' }}>
-              {tags.map((t, i) => (
-                <span key={`${t}-${i}`} className="tag">
-                  {t}
-                  <button type="button" className="tag-remove" onClick={() => removeTag(i)} aria-label="删除">×</button>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
-        <div className="form-row">
-          <label>整体感想/备注</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="记录这次约会的感受..." rows={4} />
-        </div>
-        <div className="form-row">
-          <label>照片</label>
+
+        <div className="date-form-block">
+          <h3 className="date-form-block-title">照片</h3>
+          <div className="date-form-block-body">
           <input
             ref={fileRef}
             type="file"
@@ -347,7 +327,9 @@ export default function DateForm({ person, editDateId, presetDate, onSave, onCan
               </div>
             ))}
           </div>
+          </div>
         </div>
+
         <div className="form-actions">
           <button type="button" className="btn btn-ghost" onClick={onCancel}>取消</button>
           <button type="submit" className="btn btn-primary">保存</button>
