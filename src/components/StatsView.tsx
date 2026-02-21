@@ -124,7 +124,6 @@ export default function StatsView({ persons }: Props) {
 
   const initiatedByMe = allDates.filter((d) => d.initiatedBy === 'me').length
   const initiatedByThem = allDates.filter((d) => d.initiatedBy === 'them').length
-  const initiatedUnknown = allDates.length - initiatedByMe - initiatedByThem
 
   const recentDates = [...allDates].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10)
 
