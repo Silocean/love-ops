@@ -2360,6 +2360,19 @@
     display: none;
   }
 
+  /* 顶部菜单固定，不随内容滚动 */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .main {
+    padding-top: 56px; /* 为固定 header 留出空间 */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 10px + 2rem); /* 为底 tab 留足空间，避免最后内容被遮挡 */
+  }
+
   .bottom-tab-bar {
     display: flex;
     position: fixed;
@@ -2376,10 +2389,6 @@
 
   [data-theme="dark"] .bottom-tab-bar {
     box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  .main {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 10px + 1rem);
   }
 
   /* 统计页花费趋势图：缩小列间距避免横向溢出 */
