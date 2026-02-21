@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: '对象分析系统 - Love Ops',
         short_name: 'Love Ops',
@@ -18,12 +18,9 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          {
-            src: '/icon.svg',
-            type: 'image/svg+xml',
-            sizes: 'any',
-            purpose: 'any maskable',
-          },
+          { src: '/pwa-192x192.png', type: 'image/png', sizes: '192x192', purpose: 'any' },
+          { src: '/pwa-512x512.png', type: 'image/png', sizes: '512x512', purpose: 'any' },
+          { src: '/maskable-icon-512x512.png', type: 'image/png', sizes: '512x512', purpose: 'maskable' },
         ],
       },
       workbox: {
