@@ -136,11 +136,11 @@ export default function StatsView({ persons }: Props) {
 
   return (
     <div className="page stats-page">
-      <div className="stats-page-header">
+      <div className="stats-page-header card">
         <h2 className="stats-page-title">统计概览</h2>
         <div className="stats-filters">
           <div className="stats-filter">
-            <label>对象：</label>
+            <label>对象</label>
             <select
               value={filterPersonId}
               onChange={(e) => setFilterPersonId(e.target.value)}
@@ -152,7 +152,7 @@ export default function StatsView({ persons }: Props) {
             </select>
           </div>
           <div className="stats-filter">
-            <label>时间：</label>
+            <label>时间</label>
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as TimeRange)}

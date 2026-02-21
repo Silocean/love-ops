@@ -1615,7 +1615,12 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+}
+
+.stats-page-header.card {
+  padding: 1rem 1.25rem;
 }
 
 .stats-page {
@@ -1626,12 +1631,13 @@
   margin: 0;
   flex-shrink: 0;
   white-space: nowrap;
+  font-size: 1.25rem;
 }
 
 .stats-filters {
   display: flex;
   gap: 1rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
@@ -1644,6 +1650,7 @@
 .stats-filter label {
   font-size: 0.9rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .stats-filter select {
@@ -2463,11 +2470,6 @@
 
   [data-theme="dark"] .bottom-tab-bar {
     box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  /* 统计页：窄屏时 header 允许换行 */
-  .stats-page-header {
-    flex-wrap: wrap;
   }
 
   /* 统计页花费趋势图：缩小列间距避免横向溢出 */
