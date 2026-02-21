@@ -267,6 +267,7 @@ function App() {
       </header>
 
       <main className="main">
+        <div className="main-inner">
         {page === 'list' && (
           <PersonList
             persons={persons}
@@ -391,6 +392,7 @@ function App() {
           />
         )}
         <div className="bottom-tab-spacer" aria-hidden />
+        </div>
       </main>
 
       {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
