@@ -147,4 +147,10 @@ input, textarea, select, button {
   .form-row.two-cols {
     grid-template-columns: 1fr;
   }
+
+  .form-row.two-cols .form-hint-inline {
+    display: block;
+    margin-left: 0;
+    margin-top: 0.25rem;
+  }
 }

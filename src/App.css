@@ -1077,6 +1077,18 @@
   gap: 1rem;
 }
 
+.form-row.two-cols > div {
+  min-width: 0;
+}
+
+.form-row input[type="date"] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .form-actions {
   display: flex;
   justify-content: center;
