@@ -2333,8 +2333,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(56px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(56px + env(safe-area-inset-bottom, 0px) + 10px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     z-index: 100;
@@ -2346,7 +2346,7 @@
   }
 
   .main {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 1rem);
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 10px + 1rem);
   }
 
   /* 统计页花费趋势图：缩小列间距避免横向溢出 */
