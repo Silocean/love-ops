@@ -138,7 +138,7 @@ export default function StatsView({ persons }: Props) {
   return (
     <div className="page stats-page">
       <div className="stats-page-header">
-        <h2>统计概览</h2>
+        <h2 className="stats-page-title">统计概览</h2>
         <div className="stats-filters">
           <div className="stats-filter">
             <label>对象：</label>
@@ -205,10 +205,6 @@ export default function StatsView({ persons }: Props) {
             <div className="stat-card card initiated-them-card">
               <div className="stat-value">{initiatedByThem}</div>
               <div className="stat-label">{INITIATED_BY_LABELS.them}</div>
-            </div>
-            <div className="stat-card card">
-              <div className="stat-value">{initiatedUnknown}</div>
-              <div className="stat-label">未填写</div>
             </div>
           </div>
           {(initiatedByMe + initiatedByThem) > 0 && (
