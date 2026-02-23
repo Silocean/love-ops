@@ -25,7 +25,7 @@ export default function SettingsView({
   onLogoutClick,
 }: Props) {
   const { theme, setTheme } = useTheme()
-  const { user, isConfigured } = useAuth()
+  const { user, loading: authLoading, isConfigured } = useAuth()
 
   return (
     <div className="settings-page page">
@@ -46,7 +46,16 @@ export default function SettingsView({
       {isConfigured && (
         <div className="settings-section">
           <h3>云同步</h3>
-          {user ? (
+          {authLoading ? (
+            <div className="settings-item settings-item-static">
+              <div className="settings-item-icon">
+                <Cloud size={20} className="sync-spin" />
+              </div>
+              <div className="settings-item-content">
+                <span>正在检查登录状态…</span>
+              </div>
+            </div>
+          ) : user ? (
             <>
               <div className="settings-item settings-item-static">
                 <div className="settings-item-icon">

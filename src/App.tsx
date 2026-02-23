@@ -167,7 +167,12 @@ function App() {
           <div className="header-actions-row">
             {isConfigured && (
               <>
-                {user ? (
+                {authLoading ? (
+                  <span className="header-auth-loading" aria-label="正在恢复登录">
+                    <Cloud size={18} className="sync-spin" />
+                    登录中…
+                  </span>
+                ) : user ? (
                   <div className="sync-status">
                     <button
                       type="button"
